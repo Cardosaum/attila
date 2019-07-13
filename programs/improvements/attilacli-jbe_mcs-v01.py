@@ -3,10 +3,10 @@
 # ---------------------------------------------------------------------------
 # Script: attilacli.sh
 # Este script lê informações dadas pelo usuário para definir
-# as configurações da automatização da análise de 
-# sequências de imunoglobulinas, desenvolvida pelo grupo de 
+# as configurações da automatização da análise de
+# sequências de imunoglobulinas, desenvolvida pelo grupo de
 # Bioinformática da UnB. Após imprimir as configurações num
-# arquivo, são criados links simbólicos para todos os programas 
+# arquivo, são criados links simbólicos para todos os programas
 # pertencentes ao pacote Attila, no diretório atual. Finalmente,
 # este script shell executa o script perl de automatização da análise.
 # ----------------------------------------------------------------------------
@@ -26,7 +26,7 @@ import os
 print('*'*132)
 print('{:^132}'.format('ATTILA: Automated Tool for Immunoglobulin Analysis'))
 print('*'*132)
-print()  
+print()
 
 
   # TODO
@@ -35,7 +35,7 @@ print()
 # --------------------------------------------------------------------------------------------
 
 attila_commands = {
-					'commands:': 
+					'commands:':
 						{
 							'CTRL-C':'quit ATTILA; abort analysis',
 							'TAB':'autocomplete a path'
@@ -79,7 +79,7 @@ attila_commands = {
 
 for k,v in attila_commands.items():
 	print('{}'.format(k.capitalize()))
-	for i,j, in v.items():
+	for i, j, in v.items():
 		print('{: <64}{}'.format((' '*8+i),j))
 	print()
 
@@ -104,7 +104,7 @@ for k,v in attila_commands.items():
 	# settings[15]			VL R0 path
 	# settings[16]			VL RN path
 	# settings[17]			IgBlast package path
-	# settings[18]			Minimum read length 
+	# settings[18]			Minimum read length
 	# settings[19]			Minimum base quality
 	# settings[20]			Number of candidates to rank
 
@@ -142,9 +142,9 @@ settings={
 
 def set_settings_regular(k,n):
 	'''Ask user for an info and pass it to settings['settings'+str(n)]
-				
+
 	[description]
-	
+
 	Arguments:
 		k {[str]} -- [Ask a value for user]
 		n {[int]} -- [index for settings variable]
@@ -237,7 +237,7 @@ def v_libraries(x):
 			print('File does not exist or is not a regular file')
 
 
-			
+
 
 
 
@@ -255,7 +255,7 @@ def v_libraries(x):
 print('Configuration files exist? [Y/N]')
 exist_Configuration_File = input().lower()
 if (exist_Configuration_File == '') or (exist_Configuration_File == 'n'):
-	
+
 	set_settings_regular('Enter projec name', 1)
 	set_settings_regular('Enter directory to save the project', 2)
 	# check if directory exists
@@ -292,7 +292,7 @@ if (exist_Configuration_File == '') or (exist_Configuration_File == 'n'):
 	print('{: ^132}')
 
 
-		
+
 
 
 
@@ -306,9 +306,9 @@ if (exist_Configuration_File == '') or (exist_Configuration_File == 'n'):
 
 #~ ------------------------------------------------------------------------
 							#~ Help
-#~ ------------------------------------------------------------------------	
+#~ ------------------------------------------------------------------------
 
 
-	 	
+
 
 
