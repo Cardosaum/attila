@@ -347,6 +347,11 @@ try:
 				print(f'(10) - VL R0 reads r2: {settings['settings10']}')
 				print(f'(11) - VL RN reads r1: {settings['settings11']}')
 				print(f'(12) - VL RN reads r2: {settings['settings12']}')
+				print(f'(17) - IgBlast package path: {settings['settings17']}')
+				print(f'(18) - Minimum read length: {settings['settings18']}')
+				print(f'(19) - Minimum base quality: {settings["settings19"]}')
+				print(f'(20) - Number of candidates: {settings['settings20']}')
+				print(f'{"*"*132}')
 				while True:
 					print('Is all previous settings correct? [Y/N]')
 					is_all_correct = input().lower()
@@ -356,6 +361,31 @@ try:
 								print('So, choose the setting that you want to change')
 								try:
 									setting_to_change = int(input())
+									if setting_to_change == 1:
+										set_settings_regular('Enter projec name', 1)
+									elif setting_to_change == 2:
+										set_settings_project_directory('Enter directory to save the project', 2)
+									# TODO
+									# elif setting_to_change == 3:
+									# TODO
+									# elif setting_to_change == 4:
+									elif setting_to_change == 5:
+										set_settings_file('Enter the path of fastq file of VH R0 reads r1', 5)
+									elif setting_to_change == 6:
+										set_settings_file('Enter the path of fastq file of VH R0 reads r2', 6)
+									elif setting_to_change == 7:
+										set_settings_file('Enter the path of fastq file of VH RN reads r1', 7)
+									elif setting_to_change == 8:
+										set_settings_file('Enter the path of fastq file of VH RN reads r2', 8)
+									elif setting_to_change == 9:
+										set_settings_file('Enter the path of fastq file of VL R0 reads r1', 9)
+									elif setting_to_change == 10:
+										set_settings_file('Enter the path of fastq file of VL R0 reads r2', 10)
+									elif setting_to_change == 11:
+										set_settings_file('Enter the path of fastq file of VL RN reads r1', 11)
+									elif setting_to_change == 12:
+										set_settings_file('Enter the path of fastq file of VL RN reads r2', 12)
+
 									#TODO - change settings
 									break
 								except:
@@ -374,11 +404,22 @@ try:
 				print(f'(14) - VH RN: {settings['settings14']}')
 				print(f'(15) - VL R0: {settings['settings15']}')
 				print(f'(16) - VL RN: {settings['settings16']}')
-			print(f'(17) - IgBlast package path: {settings['settings17']}')
-			print(f'(18) - Minimum read length: {settings['settings18']}')
-			print(f'(19) - Minimum base quality: {settings["settings19"]}')
-			print(f'(20) - Number of candidates: {settings['settings20']}')
-			print(f'{"*"*132}')
+				print(f'(17) - IgBlast package path: {settings['settings17']}')
+				print(f'(18) - Minimum read length: {settings['settings18']}')
+				print(f'(19) - Minimum base quality: {settings["settings19"]}')
+				print(f'(20) - Number of candidates: {settings['settings20']}')
+				print(f'{"*"*132}')
+				while True:
+					print('Is all previous settings correct? [Y/N]')
+					is_all_correct = input().lower()
+					if is_all_correct in ['', 'n', 'y']:
+						if is_all_correct in ['', 'n']:
+							while True:
+								print('So, choose the setting that you want to change')
+								try:
+									setting_to_change = int(input())
+									if setting_to_change == 1:
+
 
 		while True:
 			print('Configuration is correct? [Y/N]')
