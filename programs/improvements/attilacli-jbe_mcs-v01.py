@@ -23,6 +23,7 @@ import readline
 
 readline.set_completer_delims(' \t\n=')
 readline.parse_and_bind("tab: complete")
+ask_yes_or_no = 'Please, enter "Y" for "Yes" or "n" for "No".'
 
 try:
 	# ----------------------------------------------------------------------------
@@ -256,19 +257,27 @@ try:
 			else:
 				vlib = ''
 				print('File does not exist or is not a regular file')
+	def valid_input(message, setting_number):
+		'''
+		Ask user for input and validate it.
 
+		Only acceptable answers: 'Y', 'N' or ' '
+		'''
+		while True:
+			print(message)
+			is_valid_input = input().lower()
+			if is_valid_input == '' or is_valid_input == 'n' or is_valid_input == 's':
+				settings[f'settings{setting_number}'] = is_valid_input
+				break
+			else:
+				print(ask_yes_or_no)
 
-
-
-
-
-
-
-
-
-
-
-
+	def common_input_for_reads():
+		minimum_read_length()
+		minimum_base_quality()
+		number_of_candidates_to_rank()
+		v_libraries('h')
+		v_libraries('l')
 
 
 
@@ -278,35 +287,40 @@ try:
 		if exist_Configuration_File == '' or exist_Configuration_File == 'n' or exist_Configuration_File == 'y':
 			break
 		else:
-			print('Please, enter "Y" for "Yes" or "n" for "No".')
+			print(ask_yes_or_no)
 
 
 	if (exist_Configuration_File == '') or (exist_Configuration_File == 'n'):
 
 		set_settings_regular('Enter projec name', 1)
 		set_settings_project_directory('Enter directory to save the project', 2)
-		print('Reads are paired-end? [Y/N]')
-		paired_end = input().lower()
-		if paired_end == 'y':
-			settings['settings{}'.format(4)] = 1
-		if paired_end == 'n' or paired_end == '':
-			set_settings_file('Enter the path of fastq file of VH R0 reads r1', 5)
-			set_settings_file('Enter the path of fastq file of VH R0 reads r2', 6)
-			set_settings_file('Enter the path of fastq file of VH RN reads r1', 7)
-			set_settings_file('Enter the path of fastq file of VH RN reads r2', 8)
-			set_settings_file('Enter the path of fastq file of VL R0 reads r1', 9)
-			set_settings_file('Enter the path of fastq file of VL R0 reads r2', 10)
-			set_settings_file('Enter the path of fastq file of VL RN reads r1', 11)
-			set_settings_file('Enter the path of fastq file of VL RN reads r2', 12)
-			set_settings_file('Enter the path of fastq file of VH R0', 13)
-			set_settings_file('Enter the path of fastq file of VH RN', 14)
-			set_settings_file('Enter the path of fastq file of VL R0', 15)
-			set_settings_file('Enter the path of fastq file of VL RN', 16)
-			minimum_read_length()
-			minimum_base_quality()
-			number_of_candidates_to_rank()
-			v_libraries('h')
-			v_libraries('l')
+		while True:
+			print('Reads are paired-end? [Y/N]')
+			paired_end = input().lower()
+			if paired_end == '' or paired_end == 'n' or paired_end == 'y':
+				if paired_end == 'y':
+					settings['settings{}'.format(4)] = 1
+					set_settings_file('Enter the path of fastq file of VH R0 reads r1', 5)
+					set_settings_file('Enter the path of fastq file of VH R0 reads r2', 6)
+					set_settings_file('Enter the path of fastq file of VH RN reads r1', 7)
+					set_settings_file('Enter the path of fastq file of VH RN reads r2', 8)
+					set_settings_file('Enter the path of fastq file of VL R0 reads r1', 9)
+					set_settings_file('Enter the path of fastq file of VL R0 reads r2', 10)
+					set_settings_file('Enter the path of fastq file of VL RN reads r1', 11)
+					set_settings_file('Enter the path of fastq file of VL RN reads r2', 12)
+					common_input_for_reads()
+					break
+				elif paired_end == 'n' or paired_end == '':
+					settings['settings{}'.format(4)] = 0
+					set_settings_file('Enter the path of fastq file of VH R0', 13)
+					set_settings_file('Enter the path of fastq file of VH RN', 14)
+					set_settings_file('Enter the path of fastq file of VL R0', 15)
+					set_settings_file('Enter the path of fastq file of VL RN', 16)
+					common_input_for_reads()
+					break
+
+			else:
+				print(ask_yes_or_no)
 
 
 	#--------------------------------------------------------------------------------------------
@@ -314,8 +328,69 @@ try:
 	# -------------------------------------------------------------------------------------------
 
 	if (exist_Configuration_File == '') or (exist_Configuration_File == 'n'):
-		print('-'*132)
-		print('{: ^132}')
+		while True:
+			os.system('clear')
+			print('-'*132)
+			print('Settings for current analysis'.center(132))
+			print('-'*132)
+			print('\n\n')
+			print(f'(1) - Project name: {settings['settings1']}')
+			print(f'(2) - Project path: {settings['settings2']}')
+			print(f'(3) - Attila package path: {settings['settings3']}')
+			if settings['settings4'] == 1:
+				print('(4) - Reads are paired_end: Yes')
+				print(f'(5) - VH R0 reads r1: {settings['settings5']}')
+				print(f'(6) - VH R0 reads r2: {settings['settings6']}')
+				print(f'(7) - VH RN reads r1: {settings['settings7']}')
+				print(f'(8) - VH RN reads r2: {settings['settings8']}')
+				print(f'(9) - VL R0 reads r1: {settings['settings9']}')
+				print(f'(10) - VL R0 reads r2: {settings['settings10']}')
+				print(f'(11) - VL RN reads r1: {settings['settings11']}')
+				print(f'(12) - VL RN reads r2: {settings['settings12']}')
+				while True:
+					print('Is all previous settings correct? [Y/N]')
+					is_all_correct = input().lower()
+					if is_all_correct in ['', 'n', 'y']:
+						if is_all_correct in ['', 'n']:
+							while True:
+								print('So, choose the setting that you want to change')
+								try:
+									setting_to_change = int(input())
+									#TODO - change settings
+									break
+								except:
+									print('Please, enter an integer number.')
+									print('''\nExample:
+									      If you want to change "Project name", enter the integer number "1"''')
+
+
+							break
+					else:
+						print(ask_yes_or_no)
+
+			else:
+				print('(4) - Reads are paired_end: No')
+				print(f'(13) - VH R0: {settings['settings13']}')
+				print(f'(14) - VH RN: {settings['settings14']}')
+				print(f'(15) - VL R0: {settings['settings15']}')
+				print(f'(16) - VL RN: {settings['settings16']}')
+			print(f'(17) - IgBlast package path: {settings['settings17']}')
+			print(f'(18) - Minimum read length: {settings['settings18']}')
+			print(f'(19) - Minimum base quality: {settings["settings19"]}')
+			print(f'(20) - Number of candidates: {settings['settings20']}')
+			print(f'{"*"*132}')
+
+		while True:
+			print('Configuration is correct? [Y/N]')
+			is_correct = input().lower()
+			if is_correct == '' or is_correct == 'n' or is_correct == 's':
+				os.system('clear')
+
+				break
+			else:
+				print(ask_yes_or_no)
+
+
 
 
 
