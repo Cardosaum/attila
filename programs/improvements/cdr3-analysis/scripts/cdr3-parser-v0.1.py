@@ -31,4 +31,18 @@ with open('/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt', encodi
           read = False
 
 
+# TODO:
+''' Find which properties should be analised
+-Modules from EMBOSS
 
+- inforesidue
+- pepstats
+- pepinfo
+- charge
+- hmoment
+- iep
+- octanol
+- pepwindow
+- pepwindowall
+- garnier?
+'''
