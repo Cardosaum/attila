@@ -1,6 +1,7 @@
 import os
 import time
 import re
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 start = time.time()
 
@@ -33,7 +34,7 @@ for ffile in lisFiles:
     with open(ffile, encoding='ISO-8859-1') as file, open(f'/home/matheus/Documentos/test/{outputFile}', 'w') as out:
 
         # creat the header for outputFile
-        out.write('id,cdr3,length\n')
+        out.write('id,cdr3,length,cntA,nºA,cntC,nºC,cntD,nºD,cntE,nºE,cntF,nºF,cntG,nºG,cntH,nºH,cntI,nºI,cntK,nºK,cntL,nºL,cntM,nºM,cntN,nºN,cntP,nºP,cntQ,nºQ,cntR,nºR,cntS,nºS,cntT,nºT,cntV,nºV,cntW,nºW,cntY,nºY,pctA,N_pctA,pctC,N_pctC,pctD,N_pctD,pctE,N_pctE,pctF,N_pctF,pctG,N_pctG,pctH,N_pctH,pctI,N_pctI,pctK,N_pctK,pctL,N_pctL,pctM,N_pctM,pctN,N_pctN,pctP,N_pctP,pctQ,N_pctQ,pctR,N_pctR,pctS,N_pctS,pctT,N_pctT,pctV,N_pctV,pctW,N_pctW,pctY,N_pctY,\n')
 
         for line in file:
           if line[0] == '#':
@@ -58,7 +59,12 @@ for ffile in lisFiles:
               parse = seqRegex.search(line)
               parseLen = str(len(parse[7]))
               out.write(f'{parse[7]},')
-              out.write(parseLen)
+              out.write(f'{parseLen},')
+              prot = ProteinAnalysis(parse[7])
+              for fragment in prot.count_amino_acids().items():
+                out.write(f'{fragment[0]},{fragment[1]},')
+              for fragment in prot.get_amino_acids_percent().items():
+                out.write(f'{fragment[0]},{fragment[1]:0.2f},')
               out.write('\n')
               read = False
 

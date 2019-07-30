@@ -1,17 +1,18 @@
-import os
-import re
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
-dirToWatch = '/home/matheus/mcs/wo/R0/'
+x = ProteinAnalysis('FIVESK')
+y = ProteinAnalysis('XAQPAXAQVQLXESGXGLVQPGGSLRLSCVASGFDFSRYWMHWVRQAPGKGLEWVSHIHSDGIPTAYADSVRGRFTISRDISKNTLYLQMNNLRPEDTAVYYCVTFIVESKWGQGTLATVSSASTXGPSYSXHAXX')
 
-fileRegex = re.compile(r'((.+)aafreq.txt)')
+# for fragment in y.count_amino_acids().items():
+#   print(f'{fragment[0]},{fragment[1]}', end=',')
 
-filesInDir = []
+for fragment in x.get_amino_acids_percent().items():
+  print(f'{fragment[0]},{fragment[1]:0.2f}', end=',')
 
-for dirPath, dirName, filenames in os.walk(dirToWatch):
-    for file in filenames:
-      # print(os.path.join(dirPath, file))
-      match = re.search(fileRegex, file)
-      if match and file[0] != '.':
-        print(os.path.join(dirPath, file))
-        filesInDir.append(os.path.join(dirPath, file))
-print(filesInDir)
+l = ["A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y"]
+
+# cntX = []
+
+# for f in l:
+#   cntX.append('cnt'+f)
+#   print(f'pct{f},N_pct{f}', end=',')
