@@ -23,6 +23,10 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
 
 print(sec_struc)
+
+epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
+
+print(epsilon_prot)
 '''
 
 
@@ -31,10 +35,8 @@ w = ProteinAnalysis('MAEGEITTFTALTEKFNLPPGNYKKPKLLYCSNGGHFLRILPDGTVDGTRDRSDQHIQL
 y = ProteinAnalysis('ATIDMGEYSSSSQWFDP')
 prot = ProteinAnalysis('PKFPSNDAFDI')
 
+d = ProteinAnalysis('GPPHPNYYYHMDV')
 
-epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
-
-print(epsilon_prot)
-
+print(f'{d.molecular_weight():0.4f}')
 
 print('\n\n')

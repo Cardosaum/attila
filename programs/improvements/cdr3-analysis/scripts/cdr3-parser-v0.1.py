@@ -175,7 +175,7 @@ for ffile in lisFiles:
 
               # Get Molecular weight ot CDR3 sequence
               try:
-                  out.write(f'{prot.molecular_weight():0.4f}')
+                  out.write(f'{prot.molecular_weight():0.4f},')
               except:
                 print(f'ERRO: {ffile}, line: {line}')
 
