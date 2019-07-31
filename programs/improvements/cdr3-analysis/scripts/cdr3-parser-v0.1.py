@@ -18,10 +18,13 @@ import time
 import re
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
+# To show elapsed time
 start = time.time()
 
 cdr3_VH_Regex = re.compile(r'((C)(\w+)(C)(..)(\w+)(WG.G))')
 
+# Needed in order to verify if the line is or isn't the actual full sequence,
+# like: "YAAQPAMAEVQLLESGGGVVQPGRSLRLSCVASGFNFSPYWMHWVRQAPGKGLVWVSHIHSDGTSTSYADSVKGRFTISRDNAKNTLYLEMNSLRPEDTAVYYCVTFIVESKWGQGTLITVSSASTKGPS", for example
 read = False
 
 # regex for lines that starts with '#'
@@ -30,7 +33,6 @@ read = False
 # "#M04816:19:000000000-D4997:1:1102:14947:28739|FRAME:3|[36-122]|84717|1227616653092.06"
 # You can use Regex editors such as https://regex101.com/ for a better understanding
 # Just copy and paste this regex and sequence ID to see how it's working
-
 hashRegex = re.compile(r'(([\d\w]+)(:)(\d+)(:)(\d+)(-)([\d\w]+)(:)(\d)(:)(\d+)(:)(\d+)(:)(\d+)([|])(FRAME:(\d))([|])(\[(\d+)-(\d+)\])([|])(\d+)([|])(\d+)(\.)?(\d+))')
 
 # regex for lines that starts with '*'
@@ -42,29 +44,47 @@ greaterRegex = re.compile(r'((\w+)(:)(\w+)(:)(\d+)(-)(\w+)(:)(\d)(:)(\d+)(:)(\d+
 # regex for lines that does not start starts with an special character
 seqRegex = re.compile(r'((.+)(C)(.+)(C)(.{2})(.+)(WG.G)(.+)?)')
 
+# TODO: Is this really necessary?
 seqPatterns = {}
 
+# TODO: Remove this list when finish to write the script
 # lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/rafaCD20_Vh_R0_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Renato__zika_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR4_S8_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR2_S6_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR0_S1_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR4_S4_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR3_S7_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR3_S3_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR0_S5_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal66R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal29R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/cd20rafaR0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/zikaR0aafreq.txt']
 
+# TODO: Remove this list when finish to write the script
 lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt']
 
+# TODO: Loop for all items in "lisFiles" and analyze each one separately
 for ffile in lisFiles:
 
+    # Get the "Base Name" of the input file, replacing "aafreq.txt" for ".csv"
     outputFile = ffile.split('/')[-1].replace('aafreq.txt', '.csv')
 
+    # This encoding is needed in order to be compatible with different files
+    # In previous analyses was found that some "aafreq.txt" files had
+    # strange characters (Error in sequencing, maybe?)
     with open(ffile, encoding='ISO-8859-1') as file, open(f'/home/matheus/Documentos/test/{outputFile}', 'w') as out:
 
         # creat the header for outputFile
         out.write('id,cdr3,length,cntA,nºA,cntC,nºC,cntD,nºD,cntE,nºE,cntF,nºF,cntG,nºG,cntH,nºH,cntI,nºI,cntK,nºK,cntL,nºL,cntM,nºM,cntN,nºN,cntP,nºP,cntQ,nºQ,cntR,nºR,cntS,nºS,cntT,nºT,cntV,nºV,cntW,nºW,cntY,nºY,pctA,N_pctA,pctC,N_pctC,pctD,N_pctD,pctE,N_pctE,pctF,N_pctF,pctG,N_pctG,pctH,N_pctH,pctI,N_pctI,pctK,N_pctK,pctL,N_pctL,pctM,N_pctM,pctN,N_pctN,pctP,N_pctP,pctQ,N_pctQ,pctR,N_pctR,pctS,N_pctS,pctT,N_pctT,pctV,N_pctV,pctW,N_pctW,pctY,N_pctY,\n')
 
+        # Analyze each line in order to know what is the content
         for line in file:
+          # Expected pattern is something similar to this:
+          # "#M04816:19:000000000-D4997:1:1102:14947:28739|FRAME:3|[36-122]|84717|1227616653092.06"
           if line[0] == '#':
+
+            # Try to get all sequenceID
+            # TODO: Get something more, or one variable for each sub-pattern matched?
             try:
                 parse = hashRegex.search(line)
                 sequenceID = parse.groups()[0]
+                # TODO: Remove when script is finished
                 # print(sequenceID)
             except:
               print(f'ERROR: {ffile}, line: {line}')
+
+          # Expected pattern is something similar to this:
+          # "*CVASGFNFSPYWMHWVRQAPGKGLVWVSHIHSDGTSTSYADSVKGRFTISRDNAKNTLYLEMNSLRPEDTAVYYCVTFIVESKWGQG"
           elif line[0] == '*':
               parse = asterixRegex.search(line)
           elif line[0] == '>':
