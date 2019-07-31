@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+'''
+
+cdr3Parser.py - Analyse an "aafreq.txt" input file and return all features of CDR3 sequences
+
+Usage:
+       python3 cdr3Parser.py <INPUT_FILE>
+
+Copyright:  (c)  2019  Matheus Cardoso   <https://github.com/cardosaum>
+
+License:  Apache 2.0  <https://www.apache.org/licenses/LICENSE-2.0>
+
+'''
+
+
 import os
 import time
 import re
@@ -10,6 +25,12 @@ cdr3_VH_Regex = re.compile(r'((C)(\w+)(C)(..)(\w+)(WG.G))')
 read = False
 
 # regex for lines that starts with '#'
+# this regex is for analysing sequences' IDs
+# The expected sequences' IDs are, for example:
+# "#M04816:19:000000000-D4997:1:1102:14947:28739|FRAME:3|[36-122]|84717|1227616653092.06"
+# You can use Regex editors such as https://regex101.com/ for a better understanding
+# Just copy and paste this regex and sequence ID to see how it's working
+
 hashRegex = re.compile(r'(([\d\w]+)(:)(\d+)(:)(\d+)(-)([\d\w]+)(:)(\d)(:)(\d+)(:)(\d+)(:)(\d+)([|])(FRAME:(\d))([|])(\[(\d+)-(\d+)\])([|])(\d+)([|])(\d+)(\.)?(\d+))')
 
 # regex for lines that starts with '*'
