@@ -48,10 +48,10 @@ seqRegex = re.compile(r'((.+)(C)(.+)(C)(.{2})(.+)(WG.G)(.+)?)')
 seqPatterns = {}
 
 # TODO: Remove this list when finish to write the script
-# lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/rafaCD20_Vh_R0_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Renato__zika_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR4_S8_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR2_S6_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR0_S1_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR4_S4_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR3_S7_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR3_S3_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR0_S5_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal66R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal29R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/cd20rafaR0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/zikaR0aafreq.txt']
+lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/rafaCD20_Vh_R0_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Renato__zika_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR4_S8_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR2_S6_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR0_S1_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR4_S4_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR3_S7_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR3_S3_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR0_S5_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal66R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal29R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/cd20rafaR0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/zikaR0aafreq.txt']
 
 # TODO: Remove this list when finish to write the script
-lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt']
+# lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt']
 
 # TODO: Loop for all items in "lisFiles" and analyze each one separately
 for ffile in lisFiles:
@@ -153,56 +153,93 @@ for ffile in lisFiles:
               parse = seqRegex.search(line)
 
               # Here, parse[7] correspond to the CDR3 sequence
-              out.write(f'{parse[7]},')
+              try:
+                  out.write(f'{parse[7]},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # We're getting the length of CDR3 sequence
               parseLen = str(len(parse[7]))
-              out.write(f'{parseLen},')
+              try:
+                  out.write(f'{parseLen},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # We'll start to analyze the CDR3 sequence
               # For more information about each function,
               # Check out <http://biopython.org/DIST/docs/api/Bio.SeqUtils.ProtParam-module.html>
-              prot = ProteinAnalysis(parse[7])
+              try:
+                  prot = ProteinAnalysis(parse[7])
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get Molecular weight ot CDR3 sequence
-              out.write(f'{prot.molecular_weight():0.4f}')
+              try:
+                  out.write(f'{prot.molecular_weight():0.4f}')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get aromaticity value
-              out.write(f'{prot.aromaticity():0.4f},')
+              try:
+                  out.write(f'{prot.aromaticity():0.4f},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get instability index
-              out.write(f'{prot.instability_index():0.4f},')
+              try:
+                  out.write(f'{prot.instability_index():0.4f},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get isoelectirc point
-              out.write(f'{prot.isoelectric_point():0.4f},')
+              try:
+                  out.write(f'{prot.isoelectric_point():0.4f},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get Secondary Structure Information
-              sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
+              try:
+                  sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
 
-              sec_struc_helix = sec_struc[0]
-              sec_struc_turn = sec_struc[1]
-              sec_struc_sheet = sec_struc[2]
+                  sec_struc_helix = sec_struc[0]
+                  sec_struc_turn = sec_struc[1]
+                  sec_struc_sheet = sec_struc[2]
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
-              out.write(f'{sec_struc_helix:0.4f},')
-              out.write(f'{sec_struc_turn:0.4f},')
-              out.write(f'{sec_struc_sheet:0.4f},')
+              try:
+                  out.write(f'{sec_struc_helix:0.4f},')
+                  out.write(f'{sec_struc_turn:0.4f},')
+                  out.write(f'{sec_struc_sheet:0.4f},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get Molar Extinction Coefficient
               # TODO: Understand what this classification means
-              epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
-              epsilon_prot_reduced = epsilon_prot[0]  # with reduced cysteines
-              epsilon_prot_oxidized = epsilon_prot[1]  # with disulfid bridges
+              try:
+                  epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
+                  epsilon_prot_reduced = epsilon_prot[0]  # with reduced cysteines
+                  epsilon_prot_oxidized = epsilon_prot[1]  # with disulfid bridges
 
-              out.write(f'{epsilon_prot_reduced},')
-              out.write(f'{epsilon_prot_oxidized},')
+                  out.write(f'{epsilon_prot_reduced},')
+                  out.write(f'{epsilon_prot_oxidized},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
+
 
               # Get the aminoacids count
-              for fragment in prot.count_amino_acids().items():
-                out.write(f'{fragment[1]},')
+              try:
+                  for fragment in prot.count_amino_acids().items():
+                      out.write(f'{fragment[1]},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               # Get their percentage
-              for fragment in prot.get_amino_acids_percent().items():
-                out.write(f'{fragment[1]:0.4f},')
+              try:
+                  for fragment in prot.get_amino_acids_percent().items():
+                      out.write(f'{fragment[1]:0.4f},')
+              except:
+                print(f'ERRO: {ffile}, line: {line}')
 
               out.write('\n')
               # Here, we are ensuring that the loop will only execute if reach another line beginning with ">"
