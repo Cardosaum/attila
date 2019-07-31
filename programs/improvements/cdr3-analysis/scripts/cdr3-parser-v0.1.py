@@ -31,7 +31,7 @@ read = False
 # this regex is for analysing sequences' IDs
 # The expected sequences' IDs are, for example:
 # "#M04816:19:000000000-D4997:1:1102:14947:28739|FRAME:3|[36-122]|84717|1227616653092.06"
-# You can use Regex editors such as https://regex101.com/ for a better understanding
+# You can use Regex editors such as <https://regex101.com/> for a better understanding
 # Just copy and paste this regex and sequence ID to see how it's working
 hashRegex = re.compile(r'(([\d\w]+)(:)(\d+)(:)(\d+)(-)([\d\w]+)(:)(\d)(:)(\d+)(:)(\d+)(:)(\d+)([|])(FRAME:(\d))([|])(\[(\d+)-(\d+)\])([|])(\d+)([|])(\d+)(\.)?(\d+))')
 
@@ -65,7 +65,7 @@ for ffile in lisFiles:
     with open(ffile, encoding='ISO-8859-1') as file, open(f'/home/matheus/Documentos/test/{outputFile}', 'w') as out:
 
         # creat the header for outputFile
-        out.write(r'id,cdr3,length,MW,AV,II,IP,,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
+        out.write(r'id,cdr3,length,MW,AV,II,IP,SSF_Helix,SSF_Turn,SSF_Sheet,MEC_Reduced,MEC_Oxidized,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
 
         # Analyze each line in order to know what is the content
         for line in file:
@@ -117,6 +117,8 @@ for ffile in lisFiles:
               out.write(f'{parseLen},')
 
               # We'll start to analyze the CDR3 sequence
+              # For more information about each function,
+              # Check out <http://biopython.org/DIST/docs/api/Bio.SeqUtils.ProtParam-module.html>
               prot = ProteinAnalysis(parse[7])
 
               # Get Molecular weight ot CDR3 sequence
@@ -142,17 +144,22 @@ for ffile in lisFiles:
               out.write(f'{sec_struc_turn:0.4f},')
               out.write(f'{sec_struc_sheet:0.4f},')
 
-              # First, we get the aminoacids count
+              # Get Molar Extinction Coefficient
+              # TODO: Understand what this classification means
+              epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
+              epsilon_prot_reduced = epsilon_prot[0]  # with reduced cysteines
+              epsilon_prot_oxidized = epsilon_prot[1]  # with disulfid bridges
+
+              out.write(f'{epsilon_prot_reduced},')
+              out.write(f'{epsilon_prot_oxidized},')
+
+              # Get the aminoacids count
               for fragment in prot.count_amino_acids().items():
                 out.write(f'{fragment[1]},')
 
-              # Then, their percentage
+              # Get their percentage
               for fragment in prot.get_amino_acids_percent().items():
                 out.write(f'{fragment[1]:0.4f},')
-
-
-
-              #
 
               out.write('\n')
               # Here, we are ensuring that the loop will only execute if reach another line beginning with ">"

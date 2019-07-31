@@ -19,20 +19,22 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 # print(y.molecular_weight())
 
 # print(f'{y.aromaticity():0.4f},')
-'''
-
-
-x = ProteinAnalysis('FIVESK')
-y = ProteinAnalysis('ATIDMGEYSSSSQWFDP')
-prot = ProteinAnalysis('PKFPSNDAFDI')
-
 
 sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
 
 print(sec_struc)
+'''
 
 
+x = ProteinAnalysis('FIVESK')
+w = ProteinAnalysis('MAEGEITTFTALTEKFNLPPGNYKKPKLLYCSNGGHFLRILPDGTVDGTRDRSDQHIQLQLSAESVGEVYIKSTETGQYLAMDTSGLLYGSQTPSEECLFLERLEENHYNTYTSKKHAEKNWFVGLKKNGSCKRGPRTHYGQKAILFLPLPV')
+y = ProteinAnalysis('ATIDMGEYSSSSQWFDP')
+prot = ProteinAnalysis('PKFPSNDAFDI')
 
+
+epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
+
+print(epsilon_prot)
 
 
 print('\n\n')
