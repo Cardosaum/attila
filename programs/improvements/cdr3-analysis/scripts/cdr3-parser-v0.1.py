@@ -87,26 +87,46 @@ for ffile in lisFiles:
           # "*CVASGFNFSPYWMHWVRQAPGKGLVWVSHIHSDGTSTSYADSVKGRFTISRDNAKNTLYLEMNSLRPEDTAVYYCVTFIVESKWGQG"
           elif line[0] == '*':
               parse = asterixRegex.search(line)
+
+          # Expected pattern is something similar to this:
+          # ">M04816:19:000000000-D4997:1:1101:19065:1972|FRAME:3"
           elif line[0] == '>':
+
+              # Try to get informations about sequenceID
+              # and write this informations to the output file
+              # TODO: Get something more, or one variable for each sub-pattern matched?
               try:
                   parse = greaterRegex.search(line)
                   parse = parse[0].replace('\n', '')
-                  # print(parse[0])
+                  # print(parse)
                   out.write(f'{parse},')
               except:
                   print(f'ERROR: {ffile}, line: {line}')
+              # This line is needed to inform that the next line will be the protein sequence of the previous analysed sequence ID
               read = True
+
+          # If the previous line in <INPUT_FILE> was a line starting with ">", then, the next line will be the respective protein sequence
           elif read:
               parse = seqRegex.search(line)
+
+              # Here, parse[7] correspond to the CDR3 sequence
               parseLen = str(len(parse[7]))
               out.write(f'{parse[7]},')
               out.write(f'{parseLen},')
+
+              # We'll start to analyze the CDR3 sequence
               prot = ProteinAnalysis(parse[7])
+
+              # First, we get the aminoacids count
               for fragment in prot.count_amino_acids().items():
                 out.write(f'{fragment[0]},{fragment[1]},')
+
+              # Then, their percentage
               for fragment in prot.get_amino_acids_percent().items():
                 out.write(f'{fragment[0]},{fragment[1]:0.2f},')
+
               out.write('\n')
+              # Here, we are ensuring that the loop will only execute if reach another line beginning with ">"
               read = False
 
 
@@ -126,6 +146,8 @@ for ffile in lisFiles:
 - garnier?
 '''
 
+# Here we get when the program finished
 end = time.time()
 
+# Print the elapsed time, in seconds
 print('Elapsed time: ' + str(end - start))
