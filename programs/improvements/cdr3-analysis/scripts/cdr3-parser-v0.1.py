@@ -64,6 +64,49 @@ for ffile in lisFiles:
     # strange characters (Error in sequencing, maybe?)
     with open(ffile, encoding='ISO-8859-1') as file, open(f'/home/matheus/Documentos/test/{outputFile}', 'w') as out:
 
+        # Legend for the header in output file:
+        #
+        # NOTE: All features above were evaluated using Biopython mudule,
+        #       For more information about each feature, read the docs.
+        #
+        #       ProteinAnalysis - Biopython:
+        #       <http://biopython.org/DIST/docs/api/Bio.SeqUtils.ProtParam-module.html>
+        #
+        # id: Is the ID of the sequence currently analysed
+        #
+        #         (all subsequent characteristics correspont to cdr3 sequence)
+        #
+        # cdr3: Is the CDR3 sequence of the protein fragment.
+        #       We considered CDR3 the sequence with the folowing pattern:
+        #
+        #       <random_sequence>C<random_sequence>Cxx<cdr3_sequence>WGxG
+        #
+        #       Where "x" stands for any random aminoacid
+        #
+        # length: Length of the given CDR3 sequence
+        #
+        # MW: Molecular Weight
+        #
+        # AV: Aromaticity Value
+        #
+        # II: Instability Index
+        #
+        # IP: Isoelectric Point
+        #
+        # SSF_Helix: Secondary Structure Fragment - Helix
+        #
+        # SSF_Turn: Secondary Structure Fragment - Turn
+        #
+        # SSF_Sheet: Secondary Structure Fragment - Sheet
+        #
+        # MEC_Reduced: Molar Extinction Coefficient - Reduced, (with reduced cysteines)
+        #
+        # MEC_Oxidized: Molar Extinction Coefficient - Oxidized, (with dissulfid bridges)
+        #
+        # nºX: Number of X aminoacid in CDR3 sequence
+        #
+        # %X: Percentage of X aminoacid in CDR3 sequence
+
         # creat the header for outputFile
         out.write(r'id,cdr3,length,MW,AV,II,IP,SSF_Helix,SSF_Turn,SSF_Sheet,MEC_Reduced,MEC_Oxidized,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
 
@@ -122,7 +165,7 @@ for ffile in lisFiles:
               prot = ProteinAnalysis(parse[7])
 
               # Get Molecular weight ot CDR3 sequence
-              out.write(f'{prot.molecular_weight()},')
+              out.write(f'{prot.molecular_weight():0.4f}')
 
               # Get aromaticity value
               out.write(f'{prot.aromaticity():0.4f},')
