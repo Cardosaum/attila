@@ -1,18 +1,38 @@
+print('\n\n')
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
-x = ProteinAnalysis('FIVESK')
-y = ProteinAnalysis('XAQPAXAQVQLXESGXGLVQPGGSLRLSCVASGFDFSRYWMHWVRQAPGKGLEWVSHIHSDGIPTAYADSVRGRFTISRDISKNTLYLQMNNLRPEDTAVYYCVTFIVESKWGQGTLATVSSASTXGPSYSXHAXX')
-
+'''
 # for fragment in y.count_amino_acids().items():
-#   print(f'{fragment[0]},{fragment[1]}', end=',')
+#   print(f'{fragment[1]},')
 
 # for fragment in x.get_amino_acids_percent().items():
-#   print(f'{fragment[0]},{fragment[1]:0.2f}', end=',')
+#   print(f'{fragment[1]:0.2f}')
 
-l = ["A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y"]
+# l = ["A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y"]
 
-cntX = []
+# cntX = []
 
-for f in l:
-    cntX.append('cnt'+f)
-    print(fr'%{f}', end=',')
+# for f in l:
+#     cntX.append('cnt'+f)
+#     print(fr'nº{f}', end=',')
+
+# print(y.molecular_weight())
+
+# print(f'{y.aromaticity():0.4f},')
+'''
+
+
+x = ProteinAnalysis('FIVESK')
+y = ProteinAnalysis('ATIDMGEYSSSSQWFDP')
+prot = ProteinAnalysis('PKFPSNDAFDI')
+
+
+sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
+
+print(sec_struc)
+
+
+
+
+
+print('\n\n')

@@ -65,7 +65,7 @@ for ffile in lisFiles:
     with open(ffile, encoding='ISO-8859-1') as file, open(f'/home/matheus/Documentos/test/{outputFile}', 'w') as out:
 
         # creat the header for outputFile
-        out.write('id,cdr3,length,cntA,nºA,cntC,nºC,cntD,nºD,cntE,nºE,cntF,nºF,cntG,nºG,cntH,nºH,cntI,nºI,cntK,nºK,cntL,nºL,cntM,nºM,cntN,nºN,cntP,nºP,cntQ,nºQ,cntR,nºR,cntS,nºS,cntT,nºT,cntV,nºV,cntW,nºW,cntY,nºY,pctA,N_pctA,pctC,N_pctC,pctD,N_pctD,pctE,N_pctE,pctF,N_pctF,pctG,N_pctG,pctH,N_pctH,pctI,N_pctI,pctK,N_pctK,pctL,N_pctL,pctM,N_pctM,pctN,N_pctN,pctP,N_pctP,pctQ,N_pctQ,pctR,N_pctR,pctS,N_pctS,pctT,N_pctT,pctV,N_pctV,pctW,N_pctW,pctY,N_pctY,\n')
+        out.write(r'id,cdr3,length,MW,AV,II,IP,,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
 
         # Analyze each line in order to know what is the content
         for line in file:
@@ -110,20 +110,49 @@ for ffile in lisFiles:
               parse = seqRegex.search(line)
 
               # Here, parse[7] correspond to the CDR3 sequence
-              parseLen = str(len(parse[7]))
               out.write(f'{parse[7]},')
+
+              # We're getting the length of CDR3 sequence
+              parseLen = str(len(parse[7]))
               out.write(f'{parseLen},')
 
               # We'll start to analyze the CDR3 sequence
               prot = ProteinAnalysis(parse[7])
 
+              # Get Molecular weight ot CDR3 sequence
+              out.write(f'{prot.molecular_weight()},')
+
+              # Get aromaticity value
+              out.write(f'{prot.aromaticity():0.4f},')
+
+              # Get instability index
+              out.write(f'{prot.instability_index():0.4f},')
+
+              # Get isoelectirc point
+              out.write(f'{prot.isoelectric_point():0.4f},')
+
+              # Get Secondary Structure Information
+              sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
+
+              sec_struc_helix = sec_struc[0]
+              sec_struc_turn = sec_struc[1]
+              sec_struc_sheet = sec_struc[2]
+
+              out.write(f'{sec_struc_helix:0.4f},')
+              out.write(f'{sec_struc_turn:0.4f},')
+              out.write(f'{sec_struc_sheet:0.4f},')
+
               # First, we get the aminoacids count
               for fragment in prot.count_amino_acids().items():
-                out.write(f'{fragment[0]},{fragment[1]},')
+                out.write(f'{fragment[1]},')
 
               # Then, their percentage
               for fragment in prot.get_amino_acids_percent().items():
-                out.write(f'{fragment[0]},{fragment[1]:0.2f},')
+                out.write(f'{fragment[1]:0.4f},')
+
+
+
+              #
 
               out.write('\n')
               # Here, we are ensuring that the loop will only execute if reach another line beginning with ">"
