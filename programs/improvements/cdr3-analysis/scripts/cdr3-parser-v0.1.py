@@ -103,9 +103,12 @@ for ffile in lisFiles:
         #
         # MEC_Oxidized: Molar Extinction Coefficient - Oxidized, (with dissulfid bridges)
         #
-        # nºX: Number of X aminoacid in CDR3 sequence
+        # nºX: Number of aminoacids X in CDR3 sequence
+        #      So, if the sequence are "AAACCD"
+        #      nºA = 3, nºC = 2, nºD = 1, nºE = 0, nºF = 0, and so on
         #
-        # %X: Percentage of X aminoacid in CDR3 sequence
+        # %X: Percentage of aminoacid X in CDR3 sequence
+        #     The logic is similar to "nºX"
 
         # creat the header for outputFile
         out.write(r'id,cdr3,length,MW,AV,II,IP,SSF_Helix,SSF_Turn,SSF_Sheet,MEC_Reduced,MEC_Oxidized,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
