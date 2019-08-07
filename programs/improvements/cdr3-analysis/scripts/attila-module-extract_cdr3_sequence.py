@@ -13,7 +13,6 @@ License:  Apache 2.0  <https://www.apache.org/licenses/LICENSE-2.0>
 '''
 
 import re
-import collections
 import os
 from timeit import default_timer as timer
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
