@@ -13,15 +13,13 @@ License:  Apache 2.0  <https://www.apache.org/licenses/LICENSE-2.0>
 '''
 
 
-import os
-import time
 import re
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from collections import defaultdict
+from timeit import default_timer as timer
 
 # To show elapsed time
-start = time.time()
-
-cdr3_VH_Regex = re.compile(r'((C)(\w+)(C)(..)(\w+)(WG.G))')
+start = timer()
 
 # Needed in order to verify if the line is or isn't the actual full sequence,
 # like: "YAAQPAMAEVQLLESGGGVVQPGRSLRLSCVASGFNFSPYWMHWVRQAPGKGLVWVSHIHSDGTSTSYADSVKGRFTISRDNAKNTLYLEMNSLRPEDTAVYYCVTFIVESKWGQGTLITVSSASTKGPS", for example
@@ -47,11 +45,14 @@ seqRegex = re.compile(r'((.+)(C)(.+)(C)(.{2})(.+)(WG.G)(.+)?)')
 # TODO: Is this really necessary?
 seqPatterns = {}
 
-# TODO: Remove this list when finish to write the script
-lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/rafaCD20_Vh_R0_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Renato__zika_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR4_S8_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR2_S6_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR0_S1_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR4_S4_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR3_S7_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR3_S3_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR0_S5_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal66R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal29R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/cd20rafaR0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/zikaR0aafreq.txt']
+# Creat a dictionary for count CDR3 sequences that are repeated
+countCDR3 = defaultdict(int)
 
 # TODO: Remove this list when finish to write the script
-# lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt']
+# lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/rafaCD20_Vh_R0_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Renato__zika_R0_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR4_S8_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR2_S6_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR0_S1_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR4_S4_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR3_S7_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR3_S3_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/Thais_29_66/VCL66VHR0_S5_L001_R1_001aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal66R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/gal29R0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/cd20rafaR0aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt', '/home/matheus/mcs/wo/R0/analiseR0/zika/zikaR0aafreq.txt']
+
+# TODO: Remove this list when finish to write the script
+lisFiles = ['/home/matheus/mcs/wo/R0/Renato_zika_acido_R0_VH_R1aafreq.txt']
 
 # TODO: Loop for all items in "lisFiles" and analyze each one separately
 for ffile in lisFiles:
@@ -72,8 +73,6 @@ for ffile in lisFiles:
         #       ProteinAnalysis - Biopython:
         #       <http://biopython.org/DIST/docs/api/Bio.SeqUtils.ProtParam-module.html>
         #
-        # id: Is the ID of the sequence currently analysed
-        #
         #         (all subsequent characteristics correspont to cdr3 sequence)
         #
         # cdr3: Is the CDR3 sequence of the protein fragment.
@@ -82,6 +81,11 @@ for ffile in lisFiles:
         #       <random_sequence>C<random_sequence>Cxx<cdr3_sequence>WGxG
         #
         #       Where "x" stands for any random aminoacid
+        #
+        # nºAPP: Number of appearances - Number of different protein sequences
+        #        That have same CDR3 sequence;
+        #
+        #        Add "1" for each unique sequence found in analysis
         #
         # length: Length of the given CDR3 sequence
         #
@@ -111,10 +115,14 @@ for ffile in lisFiles:
         #     The logic is similar to "nºX"
 
         # creat the header for outputFile
-        out.write(r'id,cdr3,length,MW,AV,II,IP,SSF_Helix,SSF_Turn,SSF_Sheet,MEC_Reduced,MEC_Oxidized,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
+        out.write(r'cdr3,length,MW,AV,II,IP,SSF_Helix,SSF_Turn,SSF_Sheet,MEC_Reduced,MEC_Oxidized,nºA,nºC,nºD,nºE,nºF,nºG,nºH,nºI,nºK,nºL,nºM,nºN,nºP,nºQ,nºR,nºS,nºT,nºV,nºW,nºY,%A,%C,%D,%E,%F,%G,%H,%I,%K,%L,%M,%N,%P,%Q,%R,%S,%T,%V,%W,%Y' + '\n')
 
         # Analyze each line in order to know what is the content
         for line in file:
+
+          # List of all attributes that will be written on outputfile
+          listOfAttributes = []
+
           # Expected pattern is something similar to this:
           # "#M04816:19:000000000-D4997:1:1102:14947:28739|FRAME:3|[36-122]|84717|1227616653092.06"
           if line[0] == '#':
@@ -141,132 +149,143 @@ for ffile in lisFiles:
               # Try to get informations about sequenceID
               # and write this informations to the output file
               # TODO: Get something more, or one variable for each sub-pattern matched?
-              try:
-                  parse = greaterRegex.search(line)
-                  parse = parse[0].replace('\n', '')
-                  # print(parse)
-                  out.write(f'{parse},')
-              except:
-                  print(f'ERROR: {ffile}, line: {line}')
+              # try:
+              #     parse = greaterRegex.search(line)
+              #     parse = parse[0].replace('\n', '')
+              #     # print(parse)
+              #     out.write(f'{parse},')
+              # except:
+              #     print(f'ERROR: {ffile}, line: {line}')
               # This line is needed to inform that the next line will be the protein sequence of the previous analysed sequence ID
               read = True
 
           # If the previous line in <INPUT_FILE> was a line starting with ">", then, the next line will be the respective protein sequence
           elif read:
+
               parse = seqRegex.search(line)
 
-              # Here, parse[7] correspond to the CDR3 sequence
-              try:
-                  out.write(f'{parse[7]},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
-
-              # We're getting the length of CDR3 sequence
-              parseLen = str(len(parse[7]))
-              try:
-                  out.write(f'{parseLen},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
-
-              # We'll start to analyze the CDR3 sequence
-              # For more information about each function,
-              # Check out <http://biopython.org/DIST/docs/api/Bio.SeqUtils.ProtParam-module.html>
+              cdr3_sequence = parse[7]
+              # Analyzes the sequence and store the Regex Object
               try:
                   prot = ProteinAnalysis(parse[7])
               except:
                 print(f'ERRO: {ffile}, line: {line}')
 
-              # Get Molecular weight ot CDR3 sequence
-              try:
-                  out.write(f'{prot.molecular_weight():0.4f},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+              if cdr3_sequence in countCDR3.keys():
+                  # If CDR3 sequence already have been analyzed, only add "1"
+                  # in "countCDR3"
 
-              # Get aromaticity value
-              try:
-                  out.write(f'{prot.aromaticity():0.4f},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+                  # Add "1" for each unique CDR3 sequence
+                  countCDR3[cdr3_sequence] += 1
+                  read = False
 
-              # Get instability index
-              try:
-                  out.write(f'{prot.instability_index():0.4f},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+              else:
+                  # Add "1" for each unique CDR3 sequence
+                  countCDR3[cdr3_sequence] += 1
 
-              # Get isoelectirc point
-              try:
-                  out.write(f'{prot.isoelectric_point():0.4f},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+                  # # Here, parse[7] correspond to the CDR3 sequence
+                  # try:
+                  #     listOfAttributes.append(f'{parse[7]}')
+                  # except:
+                  #   print(f'ERRO: {ffile}, line: {line}')
 
-              # Get Secondary Structure Information
-              try:
-                  sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
+                  # Add unique CDR3 sequence to outputfile
+                  listOfAttributes.append(cdr3_sequence)
 
-                  sec_struc_helix = sec_struc[0]
-                  sec_struc_turn = sec_struc[1]
-                  sec_struc_sheet = sec_struc[2]
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+                  # We're getting the length of CDR3 sequence
+                  parseLen = str(len(parse[7]))
+                  try:
+                      listOfAttributes.append(f'{parseLen}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
 
-              try:
-                  out.write(f'{sec_struc_helix:0.4f},')
-                  out.write(f'{sec_struc_turn:0.4f},')
-                  out.write(f'{sec_struc_sheet:0.4f},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
-
-              # Get Molar Extinction Coefficient
-              # TODO: Understand what this classification means
-              try:
-                  epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
-                  epsilon_prot_reduced = epsilon_prot[0]  # with reduced cysteines
-                  epsilon_prot_oxidized = epsilon_prot[1]  # with disulfid bridges
-
-                  out.write(f'{epsilon_prot_reduced},')
-                  out.write(f'{epsilon_prot_oxidized},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+                  # We'll start to analyze the CDR3 sequence
+                  # For more information about each function,
+                  # Check out <http://biopython.org/DIST/docs/api/Bio.SeqUtils.ProtParam-module.html>
 
 
-              # Get the aminoacids count
-              try:
-                  for fragment in prot.count_amino_acids().items():
-                      out.write(f'{fragment[1]},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+                  # Get Molecular weight ot CDR3 sequence
+                  try:
+                      listOfAttributes.append(f'{prot.molecular_weight():0.4f}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
 
-              # Get their percentage
-              try:
-                  for fragment in prot.get_amino_acids_percent().items():
-                      out.write(f'{fragment[1]:0.4f},')
-              except:
-                print(f'ERRO: {ffile}, line: {line}')
+                  # Get aromaticity value
+                  try:
+                      listOfAttributes.append(f'{prot.aromaticity():0.4f}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
 
-              out.write('\n')
-              # Here, we are ensuring that the loop will only execute if reach another line beginning with ">"
-              read = False
+                  # Get instability index
+                  try:
+                      listOfAttributes.append(f'{prot.instability_index():0.4f}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
+
+                  # Get isoelectirc point
+                  try:
+                      listOfAttributes.append(f'{prot.isoelectric_point():0.4f}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
+
+                  # Get Secondary Structure Information
+                  try:
+                      sec_struc = prot.secondary_structure_fraction() # [helix, turn, sheet]
+
+                      sec_struc_helix = sec_struc[0]
+                      sec_struc_turn = sec_struc[1]
+                      sec_struc_sheet = sec_struc[2]
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
+
+                  try:
+                      listOfAttributes.append(f'{sec_struc_helix:0.4f}')
+                      listOfAttributes.append(f'{sec_struc_turn:0.4f}')
+                      listOfAttributes.append(f'{sec_struc_sheet:0.4f}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
+
+                  # Get Molar Extinction Coefficient
+                  # TODO: Understand what this classification means
+                  try:
+                      epsilon_prot = prot.molar_extinction_coefficient()  # [Reduced, Oxidized]
+                      epsilon_prot_reduced = epsilon_prot[0]  # with reduced cysteines
+                      epsilon_prot_oxidized = epsilon_prot[1]  # with disulfid bridges
+
+                      listOfAttributes.append(f'{epsilon_prot_reduced}')
+                      listOfAttributes.append(f'{epsilon_prot_oxidized}')
+                  except:
+                      print(f'ERRO: {ffile}, line: {line}')
 
 
-# TODO:
-''' Find which properties should be analised
--Modules from EMBOSS
+                  # Get the aminoacids count
+                  try:
+                      for fragment in prot.count_amino_acids().items():
+                          listOfAttributes.append(f'{fragment[1]}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
 
-- inforesidue
-- pepstats
-- pepinfo
-- charge
-- hmoment
-- iep
-- octanol
-- pepwindow
-- pepwindowall
-- garnier?
-'''
+                  # Get their percentage
+                  try:
+                      for fragment in prot.get_amino_acids_percent().items():
+                          listOfAttributes.append(f'{fragment[1]:0.4f}')
+                  except:
+                    print(f'ERRO: {ffile}, line: {line}')
+
+                  # Write all attributes of the current CDR3 sequence to
+                  # output file
+                  writeAttributes = ','.join(listOfAttributes)
+                  out.write(f'{writeAttributes}\n')
+                  # print(f'{writeAttributes}\n')
+
+                  # Here, we are ensuring that the loop will only execute if
+                  # reach another line beginning with ">"
+                  read = False
+
+# print(countCDR3)
 
 # Here we get when the program finished
-end = time.time()
+end = timer()
 
 # Print the elapsed time, in seconds
-print('Elapsed time: ' + str(end - start))
+print(f'Elapsed time: {end - start}')
