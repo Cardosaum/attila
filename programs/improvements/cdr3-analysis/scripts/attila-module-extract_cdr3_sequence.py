@@ -24,7 +24,7 @@ cdr3_regex = re.compile(r'((.+)(C)(.+)(C)(.{2})(.+)(WG.G)(.+)?)')
 
 def extract_cdr3(file):
   dic_cdr3 = {}
-  with open(file) as f:
+  with open(file, encoding="ISO-8859-1") as f:
     read = False
     for line in f:
       if line.startswith('>'):
@@ -41,7 +41,7 @@ def extract_cdr3(file):
 
 
 
-all_cdr3 = extract_cdr3('/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt')
+all_cdr3 = extract_cdr3('/home/mcsouza/mcs-uracila/files-to-work-with/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt')
 
 # print(all_cdr3)
 
@@ -76,7 +76,54 @@ def get_cdr3_attributes(file):
       # TODO: Write all attributes to a file
       out.write(f'{";".join(attributes)}\n')
 
+def aa_groups(sequence):
+	group = {
+				'aliphatic': ['G', 'A', 'P', 'V', 'L', 'I', 'M'],
+				'aromatic': ['F', 'Y', 'W'],
+				'neutral': ['S', 'T', 'C', 'N', 'Q'],
+				'positive': ['K', 'H', 'R'],
+				'negative': ['D', 'E'],
+			}
 
-get_cdr3_attributes('/home/matheus/mcs/wo/R0/analiseR0/zika/R4ac_VH_R1aafreq.txt')
+	result = {
+				'aliphatic': 0,
+				'aromatic': 0,
+				'neutral': 0,
+				'positive': 0,
+				'negative': 0,
+				'invalid': 0,
+			}
+
+	not_listed = set()
+	for aa in sequence.upper():
+		if aa in group['aliphatic']:
+			result['aliphatic'] += 1
+		elif aa in group['aromatic']:
+			result['aromatic'] += 1
+		elif aa in group['neutral']:
+			result['neutral'] += 1
+		elif aa in group['positive']:
+			result['positive'] += 1
+		elif aa in group['negative']:
+			result['negative'] += 1
+		else:
+			not_listed.add(aa)
+			result['invalid'] += 1
+	print(len(sequence))
+	r = 0
+	for k, v in result.items():
+		if not k == 'invalid':
+				r += v
+	print(r)
+	print(not_listed)
+	return result
+
+
+
+
+
+get_cdr3_attributes('/home/mcsouza/mcs-uracila/files-to-work-with/R0/analiseR0/zika/R4pep_VH_R1aafreq.txt')
 
 print(f'\n\nElapsed time: {timer() - start}')
+
+print(aa_groups('XÿGMÿGVAAQPAMAQVQLQESGGGLVQPGGSLRLSCVASGFDFSRYWMHWVRQAPGKGLEWVSHIHSDGIPTAYADSVRGRFTISRDISKNTLYLQMNNLRPEDTAVYYCVTFIVESKWGQGTLVTVSSAXTKGPS'))
