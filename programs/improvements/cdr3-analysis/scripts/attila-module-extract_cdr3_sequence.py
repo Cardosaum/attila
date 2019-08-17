@@ -41,7 +41,7 @@ def extract_cdr3(file):
 
 
 
-all_cdr3 = extract_cdr3('/home/mcsouza/mcs-uracila/files-to-work-with/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt')
+all_cdr3 = extract_cdr3('/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt')
 
 # print(all_cdr3)
 
@@ -95,7 +95,7 @@ def write_cdr3_attributes(file):
   # TODO: Write HEADER to file
   output_file = f'{os.path.splitext(file)[0]}.csv'
   with open(output_file, 'w') as out:
-    out.write(r'cdr3;quantity;length;MW;AV;IP;flex;gravy;SSF_Helix;SSF_Turn;SSF_Sheet;nºA;nºC;nºD;nºE;nºF;nºG;nºH;nºI;nºK;nºL;nºM;nºN;nºP;nºQ;nºR;nºS;nºT;nºV;nºW;nºY;%A;%C;%D;%E;%F;%G;%H;%I;%K;%L;%M;%N;%P;%Q;%R;%S;%T;%V;%W;%Y;aliphatic;aromatic;neutral;positive;negative;invalid' + '\n')
+    out.write(r'cdr3;quantity;length;MW;AV;IP;flex;gravy;SSF_Helix;SSF_Turn;SSF_Sheet;%A;%C;%D;%E;%F;%G;%H;%I;%K;%L;%M;%N;%P;%Q;%R;%S;%T;%V;%W;%Y;aliphatic;aromatic;neutral;positive;negative;invalid' + '\n')
     for cdr3, quantity in all_cdr3.items():
       attributes = []
       # print(f'CDR3:\t{cdr3}'.ljust(60)+f'Quantity: {quantity}'.rjust(20))
@@ -111,8 +111,8 @@ def write_cdr3_attributes(file):
       attributes.append(f'{prot.secondary_structure_fraction()[0]:0.4f}')
       attributes.append(f'{prot.secondary_structure_fraction()[1]:0.4f}')
       attributes.append(f'{prot.secondary_structure_fraction()[2]:0.4f}')
-      for num_of_fragment in prot.count_amino_acids().values():
-        attributes.append(str(num_of_fragment))
+      # for num_of_fragment in prot.count_amino_acids().values():
+      #   attributes.append(str(num_of_fragment))
       for percent_of_fragment in prot.get_amino_acids_percent().values():
         attributes.append(f'{percent_of_fragment:0.4f}')
       groups = aa_groups(cdr3)
@@ -125,7 +125,7 @@ def write_cdr3_attributes(file):
 
 
 
-write_cdr3_attributes('/home/mcsouza/mcs-uracila/files-to-work-with/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt')
+write_cdr3_attributes('/home/matheus/mcs/wo/R0/Thais_29_66/VCL29VHR2_S2_L001_R1_001aafreq.txt')
 
 
 
