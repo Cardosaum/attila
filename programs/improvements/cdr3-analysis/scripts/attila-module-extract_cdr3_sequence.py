@@ -86,34 +86,36 @@ def aa_groups(sequence):
 def write_cdr3_attributes(file):
   # TODO: Write HEADER to file
   output_file = f'{os.path.splitext(file)[0]}.csv'
-  with open(output_file, 'w') as out:
-    out.write(r'cdr3;quantity;length;MW;AV;IP;flex;gravy;SSF_Helix;SSF_Turn;SSF_Sheet;%A;%C;%D;%E;%F;%G;%H;%I;%K;%L;%M;%N;%P;%Q;%R;%S;%T;%V;%W;%Y;aliphatic;aromatic;neutral;positive;negative;invalid' + '\n')
-    for cdr3, quantity in extract_cdr3(file).items():
-      attributes = []
-      # print(f'CDR3:\t{cdr3}'.ljust(60)+f'Quantity: {quantity}'.rjust(20))
-      attributes.append(cdr3)
-      attributes.append(str(quantity))
-      attributes.append(str(len(cdr3)))
-      prot = ProteinAnalysis(cdr3)
-      attributes.append(f'{prot.molecular_weight():0.4f}')
-      attributes.append(f'{prot.aromaticity():0.4f}')
-      attributes.append(f'{prot.isoelectric_point():0.4f}')
-      attributes.append(f'{aa_flex(cdr3)}')
-      attributes.append(f'{prot.gravy():0.4f}')
-      attributes.append(f'{prot.secondary_structure_fraction()[0]:0.4f}')
-      attributes.append(f'{prot.secondary_structure_fraction()[1]:0.4f}')
-      attributes.append(f'{prot.secondary_structure_fraction()[2]:0.4f}')
-      # for num_of_fragment in prot.count_amino_acids().values():
-      #   attributes.append(str(num_of_fragment))
-      for percent_of_fragment in prot.get_amino_acids_percent().values():
-        attributes.append(f'{percent_of_fragment:0.4f}')
-      groups = aa_groups(cdr3)
-      for k, v in groups.items():
-        attributes.append(str(v))
-      # TODO: ASA (accessibility) - (?)
-      # TODO: Write all attributes to a file
-      out.write(f'{";".join(attributes)}\n')
-
+  try:
+	  with open(output_file, 'w') as out:
+	    out.write(r'cdr3;quantity;length;MW;AV;IP;flex;gravy;SSF_Helix;SSF_Turn;SSF_Sheet;%A;%C;%D;%E;%F;%G;%H;%I;%K;%L;%M;%N;%P;%Q;%R;%S;%T;%V;%W;%Y;aliphatic;aromatic;neutral;positive;negative;invalid' + '\n')
+	    for cdr3, quantity in extract_cdr3(file).items():
+	      attributes = []
+	      # print(f'CDR3:\t{cdr3}'.ljust(60)+f'Quantity: {quantity}'.rjust(20))
+	      attributes.append(cdr3)
+	      attributes.append(str(quantity))
+	      attributes.append(str(len(cdr3)))
+	      prot = ProteinAnalysis(cdr3)
+	      attributes.append(f'{prot.molecular_weight():0.4f}')
+	      attributes.append(f'{prot.aromaticity():0.4f}')
+	      attributes.append(f'{prot.isoelectric_point():0.4f}')
+	      attributes.append(f'{aa_flex(cdr3)}')
+	      attributes.append(f'{prot.gravy():0.4f}')
+	      attributes.append(f'{prot.secondary_structure_fraction()[0]:0.4f}')
+	      attributes.append(f'{prot.secondary_structure_fraction()[1]:0.4f}')
+	      attributes.append(f'{prot.secondary_structure_fraction()[2]:0.4f}')
+	      # for num_of_fragment in prot.count_amino_acids().values():
+	      #   attributes.append(str(num_of_fragment))
+	      for percent_of_fragment in prot.get_amino_acids_percent().values():
+	        attributes.append(f'{percent_of_fragment:0.4f}')
+	      groups = aa_groups(cdr3)
+	      for k, v in groups.items():
+	        attributes.append(str(v))
+	      # TODO: ASA (accessibility) - (?)
+	      # TODO: Write all attributes to a file
+	      out.write(f'{";".join(attributes)}\n')
+  except:
+  	print(f'\n\nERROR:\t{file}\n')
 
 def aa_flex(aa):
   total_flex = 0
@@ -154,6 +156,7 @@ lis_files = ['/home/matheus/mcs/wo/R0/._Renato__zika_R0_VH_R1aafreq.txt', '/home
 
 # write_cdr3_attributes()
 for file in lis_files:
-    print(file.replace('/home/matheus', os.path.expanduser('~')))
+    f = file.replace('/home/matheus', os.path.expanduser('~'))
+    write_cdr3_attributes(f)
 
 print(f'\n\nElapsed time: {timer() - start}')
