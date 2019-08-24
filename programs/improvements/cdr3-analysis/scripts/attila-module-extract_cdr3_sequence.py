@@ -86,9 +86,10 @@ def aa_groups(sequence):
 def write_cdr3_attributes(file):
   # TODO: Write HEADER to file
   output_file = f'{os.path.splitext(file)[0]}.csv'
+  header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy', 'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', '%A', '%C', '%D', '%E', '%F', '%G', '%H', '%I', '%K', '%L', '%M', '%N', '%P', '%Q', '%R', '%S', '%T', '%V', '%W', '%Y', 'aliphatic', 'aromatic', 'neutral', 'positive', 'negative', 'invalid']
   try:
 	  with open(output_file, 'w') as out:
-	    out.write(r'cdr3;quantity;length;MW;AV;IP;flex;gravy;SSF_Helix;SSF_Turn;SSF_Sheet;%A;%C;%D;%E;%F;%G;%H;%I;%K;%L;%M;%N;%P;%Q;%R;%S;%T;%V;%W;%Y;aliphatic;aromatic;neutral;positive;negative;invalid' + '\n')
+	    out.write(','.join(header) + '\n')
 	    for cdr3, quantity in extract_cdr3(file).items():
 	      attributes = []
 	      # print(f'CDR3:\t{cdr3}'.ljust(60)+f'Quantity: {quantity}'.rjust(20))
@@ -113,7 +114,7 @@ def write_cdr3_attributes(file):
 	        attributes.append(str(v))
 	      # TODO: ASA (accessibility) - (?)
 	      # TODO: Write all attributes to a file
-	      out.write(f'{";".join(attributes)}\n')
+	      out.write(f'{",".join(attributes)}\n')
   except:
   	print(f'\n\nERROR:\t{file}\n')
 
