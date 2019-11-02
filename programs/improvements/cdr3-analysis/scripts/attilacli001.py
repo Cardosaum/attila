@@ -27,9 +27,12 @@ readline.parse_and_bind("tab: complete")
 ask_yes_or_no = 'Please, enter "Y" for "Yes" or "n" for "No".'
 
 try:
-    # -------------------------------------------------------------------------
-    # Argument parser
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------------
+    # Help
+    # --------------------------------------------------------------------------------------------
+
+    # This help message will only be shown if user specify <program>.py --help
+    # or <program>.py -h
 
     def parse_args():
         '''Function to handle building and parsing of command line arguments'''
@@ -79,68 +82,17 @@ Parameters for single-end reads:
 
 
     fg = parse_args()
-    sys.exit()
+
+
     # ----------------------------------------------------------------------------
                                                 # Starting Program
     # ----------------------------------------------------------------------------
 
-    # print('*'*132)
-    # print('{:^132}'.format('ATTILA: Automated Tool for Immunoglobulin Analysis'))
-    # print('*'*132)
-    # print()
+    print('*'*132)
+    print('{:^132}'.format('ATTILA: Automated Tool for Immunoglobulin Analysis'))
+    print('*'*132)
+    print()
 
-    # TODO
-    # --------------------------------------------------------------------------------------------
-    # Help
-    # --------------------------------------------------------------------------------------------
-
-    # This help message will only be shown if user specify <program>.py --help
-    # or <program>.py -h
-
-    # TODO: write if statemant to show help message only if '--help' or '-h'
-    # was specified
-
-    # attila_commands = {
-    #     'commands:':
-    #     {
-    #         'CTRL-C': 'quit ATTILA; abort analysis',
-    #         'TAB': 'autocomplete a path'
-    #     },
-    #     'configuration parameters:':
-    #     {
-    #         'Configuration files exist (y or n)': 'type \'y\' if you already have configuration files\n\
-    #                     type \'n\' or press ENTER key if you prefer to let ATTILA create the conf{}iguration files'.format((' '*64)),
-    #         'Path of the configuration file of VH libraries': 'location of the configuration file of VH libraries',
-    #         'Path of the configuration file of VL libraries': 'location of the configuration file of VL libraries',
-    #         'Project Name': 'name of the directory that will be created by ATTILA to save output {}files'.format((' '*67)),
-    #         'Directory to save project': 'the directory where the project will be saved',
-    #         'Reads are paired-end (y or n)': 'type \'y\' or press ENTER key for yes; type \'n\' for no',
-    #         'Minimum read length': 'default value is 300 pb; type \'y\' to change default; type \'n\' or press {}ENTER key to use default value\n\
-    #                     if you choose to change default value, the new read length must be an i{}nteger number'.format((' '*64), (' '*64)),
-    #         'Minimum base quality': 'default value is 20; type \'y\' to change default; type \'n\' or press ENTE{}R key to use default value\n\
-    #                     if you choose to change default value, the new base quality must be an {}integer number'.format((' '*64), (' '*64)),
-    #         'Number of candidates to rank': 'number of candidate clones that ATTILA will try to find in VH and VL li{}braries\n\
-    #                     the number must be an integer'.format((' '*64))
-    #     },
-    #     'Parameters for paired-end reads:':
-    #     {
-    #         'Path of fastq file of VH R0 reads r1': 'location of the fastq file containing reads r1 from initial VH library',
-    #         'Path of fastq file of VH R0 reads r2': 'location of the fastq file containing reads r2 from initial VH library',
-    #         'Path of fastq file of VH RN reads r1': 'location of the fastq file containing reads r1 from final VH library',
-    #         'Path of fastq file of VH RN reads r2': 'location of the fastq file containing reads r2 from final VH library',
-    #         'Path of fastq file of VL R0 reads r1': 'location of the fastq file containing reads r1 from initial VL library',
-    #         'Path of fastq file of VL R0 reads r2': 'location of the fastq file containing reads r2 from initial VL library',
-    #         'Path of fastq file of VL RN reads r1': 'location of the fastq file containing reads r1 from final VL library',
-    #         'Path of fastq file of VL RN reads r2': 'location of the fastq file containing reads r2 from final VL library'
-    #     },
-    #     'Parameters for single-end reads:':
-    #     {
-    #         'Path of fastq file of VH R0': 'location of fastq file containing reads from initial VH library',
-    #         'Path of fastq file of VH RN': 'location of fastq file containing reads from initial VH library',
-    #         'Path of fastq file of VL R0': 'location of fastq file containing reads from initial VH library',
-    #         'Path of fastq file of VL RN': 'location of fastq file containing reads from initial VH library'
-    #     }
-    # }
     # --------------------------------------------------------------------------------------------
         # Analysis settings
     # --------------------------------------------------------------------------------------------
