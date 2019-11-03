@@ -17,6 +17,7 @@
 
 import sys
 import pprint
+import shutil
 import os
 import argparse
 import readline
@@ -25,6 +26,8 @@ import re
 readline.set_completer_delims(' \t\n=')
 readline.parse_and_bind("tab: complete")
 ask_yes_or_no = 'Please, enter "Y" for "Yes" or "n" for "No".'
+dir_to_save_config_files = 'ATTILASymLinks'
+
 
 try:
     # --------------------------------------------------------------------------------------------
@@ -88,6 +91,7 @@ Parameters for single-end reads:
                                                 # Starting Program
     # ----------------------------------------------------------------------------
 
+    os.system('clear')
     print('*'*132)
     print('{:^132}'.format('ATTILA: Automated Tool for Immunoglobulin Analysis'))
     print('*'*132)
@@ -283,6 +287,7 @@ Parameters for single-end reads:
         set_settings_regular('Enter projec name', 1)
         set_settings_project_directory(
             'Enter directory to save the project', 2)
+        settings['settings3'] = os.path.realpath('..')
         while True:
             print('Reads are paired-end? [Y/N]')
             paired_end = input().lower()
@@ -466,72 +471,118 @@ Parameters for single-end reads:
                     else:
                         print(ask_yes_or_no)
                 break
+
+
 # ----------------------------------------------------------------------------------------
                 # Write settings to file
 # ----------------------------------------------------------------------------------------------
 
     def write_settings(path, config):
-        with open(path, 'a') as file:
-            file.append(config)
+        with open(path, 'w') as file:
+            file.write(config)
+
+
+    def save_settings_Vx(x):
+        filecfg = f"{settings['settings1']}_V{x}.cfg"
+        with open(filecfg, 'w') as f:
+            if x == 'H':
+                libtype = 0
+                if settings['settings4'] == 0:
+                    Vx_info = f"input1dir: {settings['settings13']}\ninput2dir: {settings['settings14']}"
+                if settings['settings4'] == 1:
+                    Vx_info = f"input1r1dir: {settings['settings5']}\ninput1r2dir: {settings['settings6']}\ninput2r1dir: {settings['settings7']}\ninput2r2dir: {settings['settings8']}"
+            if x == 'V':
+                libtype = 1
+                if settings['settings4'] == 0:
+                    Vx_info = f"input1dir: {settings['settings15']}\ninput2dir: {settings['settings16']}"
+                if settings['settings4'] == 1:
+                    Vx_info = f"input1r1dir: {settings['settings9']}\ninput1r2dir: {settings['settings10']}\ninput2r1dir: {settings['settings11']}\ninput2r2dir: {settings['settings12']}"
+
+            write_on_file = \
+f'''
+{'-'*70}
+# Settings for immunoglobulin sequence analysis
+# [ Section: files and directories ]
+projectname: {settings['settings1']}
+projectdir: {settings['settings2']}
+packagedir: {settings['settings3']}
+igblastdir: {settings['settings17']}
+{Vx_info}
+# [ Section: analysis arguments ]
+libtype: {libtype}
+listsize: {settings['settings20']}
+pairedend: {settings['settings4']}
+minlen: {settings['settings18']}
+minqual: {settings['settings19']}
+'''
+
+            f.writelines(write_on_file.splitlines())
+
+
 
     if exist_Configuration_File == '' or exist_Configuration_File == 'n':
-        for i in ('n', '', 'y'):
-            if i == 'n' or '':
-                for r in range(1, 21):
-                    filect = (
-                        '/home/jheny/jbs/Attila_analys/resattila/_VH.cfg', {settings['settings'+str(r)]})
-                    vhfilecfg = filect
-            if i == 'y':
-                for r in range(1, 21):
-                    filecfg = (
-                        '/home/jheny/jbs/Attila_analys/resattila/_VL.cfg', {settings['settings'+str(r)]})
-                    vlfilecfg = filect
-                #write_settings(filect, r)
-                    print('-'*132)
-                    print('# Settings for immunoglobulin sequence analysis')
-                    print('# [ Section: files and directories ]')
-                    print(f'projectname: {settings["settings1"]}')
-                    print(f'projectdir: {settings["settings2"]}')
-                    print(f'packagedir: {settings["settings3"]}')
-                    print(f'gblastdir: {settings["settings17"]}')
-                    if i == 'n' and settings['settings4'] == 'n':
-                        print(f'input1dir: {settings["settings13"]}')
-                        print(f'input2dir: {settings["settings14"]}')
-                    elif i == 'n' and settings["settings4"] == 'y':
-                        print(f'input1r1dir: {settings["settings5"]}')
-                        print(f'input1r2dir: {settings["settings6"]}')
-                        print(f'input2r1dir: {settings["settings7"]}')
-                        print(f'input2r2dir: {settings["settings8"]}')
-                    elif i == 'y' and settings["settings4"] == 'n':
-                        print(f'input1dir: {settings["settings15"]}')
-                        print(f'input2dir: {settings["settings16"]}')
-                    else:
-                        print(f'input1r1dir: {settings["settings9"]}')
-                        print(f'input1r2dir: {settings["settings10"]}')
-                        print(f'input2r1dir: {settings["settings11"]}')
-                        print(f'input2r2dir: {settings["settings12"]}')
-                    print('# [ Section: analysis arguments ]')
-                    print(f'libtype: {i}')
-                    print(f'listsize: {settings["settings20"]}')
-                    print(f'pairedend: {settings["settings4"]}')
-                    print(f'minlen: {settings["settings18"]}')
-                    print(f'minqual: {settings["settings19"]}')
-        if i != 'n' or '' or 'y':
-            print(ask_yes_or_no)
+        for f in ('H', 'L'):
+            save_settings_Vx(f)
 
 
 # -------------------------------------------------------------------
 #              Create symbolic links
 # ---------------------------------------------------------------------------
 
-    # if exist_Configuration_File == '' or exist_Configuration_File == 'n':
-    #   for r  in range(1, 21):
-    #     filect = Write_settings('/home/jheny/jbs/Attila_analys/resattila/_VH.cfg', {settings["settings",{r}]})
-    #     vlfilecfg = filect
+    if exist_Configuration_File == '' or exist_Configuration_File == 'n':
+        for item in os.listdir():
+            if os.path.isdir(os.path.join(os.getcwd(), item)):
+                if file == dir_to_save_config_files:
 
-    # ~ ------------------------------------------------------------------------
-            #~ Help
-    # ~ ------------------------------------------------------------------------
+                    # TODO: Não seria melhor verificar se o diretório de configuração existe lá no início do script?
+
+                    print(f'{dir_to_save_config_files} already exist, do you want to override those files with the new configuration? [Y/N]')
+                    while True:
+                        override = input().strip()
+                        if override in ('', 'n', 'y'):
+                            break
+                        else:
+                            print(ask_yes_or_no)
+                            continue
+                    if override == 'y':
+                        shutil.rmtree(os.path.join(os.getcwd(), dir_to_save_config_files))
+                    else:
+                        print('\n\n')
+                        print('Ok.')
+                        print('ATTILACli will abort configuration...')
+                        print('\n\n')
+                        sys.exit()
+        # If {dir_to_save_config_files} does not exist, create it
+        os.mkdir(os.path.join(os.getcwd(), dir_to_save_config_files))
+        def create_list_of_symlinks():
+            symlink_list = []
+            files = ['autoiganalysis3.pl', 'translateab9', 'frequency_counter3.pl', 'find_duplicates7.pl', 'get_nsequences.pl', 'numberab.pl', 'convertofasta.pl', 'get_ntsequence2.pl', 'rscript_creator.pl', 'html_creator.pl', 'parserid.pl', 'statscript_creator.pl']
+            for file in files:
+                symlink_list.append(os.path.join(settings['settings3'], 'programs', f'{file}'))
+
+            return (symlink_list, files)
+
+        def create_symlinks(list_of_symlinks):
+            for symlink in range(len(list_of_symlinks)):
+                os.system(f"ln -s {list_of_symlinks[0][symlink]} {os.path.join('ATTILASymLinks', {}.format(list_of_symlinks[1][symlink]))}")
+
+# --------------------------------------------------------------------------------------------
+        # Run analysis
+# --------------------------------------------------------------------------------------------
+
+    os.system('clear')
+    print("Creating project directory")
+    dir_to_create = []
+    project = os.path.join(settings['settings2'], settings['settings1'])
+    reportdir = os.path.join(project,'Report')
+
+    dir_to_create.append(project)
+    dir_to_create.append(reportdir)
+
+    for directory in dir_to_create:
+        os.mkdir(directory)
+
+
 
 except KeyboardInterrupt:
     print('\n\nExiting ATTILA...\n')
