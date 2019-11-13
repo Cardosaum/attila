@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 '''
 
-attila-module-extract_cdr3_sequence.py - Analyze an "aafreq.txt" input file and return all features of CDR3 sequences
+cdr3.py - Analyze an "aafreq.txt" input file and return all features of CDR3 sequences
 
 Usage:
        python3 cdr3Parser.py <INPUT_FILE>
