@@ -52,14 +52,22 @@ countCDR3 = defaultdict(int)
 
 # TODO: Remove this list when finish to write the script
 
-lisFiles = sys.argv[1:]
+dirFiles = sys.argv[1:][0].strip()
+tmpFiles = os.listdir(dirFiles)
+lisFiles = []
+for file in tmpFiles:
+  if file.startswith('R'):
+    lisFiles.append(file)
+lisFiles.sort()
+
 
 
 # TODO: Loop for all items in "lisFiles" and analyze each one separately
 for ffile in lisFiles:
     # Get the "Base Name" of the input file, replacing "aafreq.txt" for ".csv"
-
     # outputFile = ffile.split('/')[-1].replace('aafreq.txt', '.csv')
+    ffile = os.path.join(dirFiles, ffile)
+    print(ffile)
     outputFile = os.path.basename(ffile).replace('aafreq.txt', 'aafreq.csv')
     outputPath = os.path.dirname(ffile)
     outputAbsPath = os.path.join(outputPath, outputFile)
