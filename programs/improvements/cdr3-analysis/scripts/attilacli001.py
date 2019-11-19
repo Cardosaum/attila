@@ -41,6 +41,7 @@ def set_settings_regular(k, n):
     print('{}:'.format(k))
     settings['settings{}'.format(n)] = input()
 
+
 def set_settings_project_directory(k, n):
     '''Ask user for a valid directory and pass it to settings['settings'+str(n)]
     Arguments:
@@ -53,8 +54,11 @@ def set_settings_project_directory(k, n):
         if not os.path.isdir(settings[f'settings{n}']):
             print(f'''"{settings[f'settings{n}']}" is NOT a directory. Please, enter a valid one.\n''')
             settings['settings{}'.format(n)] = ''
+
+
 def error_file_format():
     print('Error: Input format is incorrect. Please use fastq format')
+
 
 def error_file_inexistent():
     print('Error: File does not exist or is not a regular file')
