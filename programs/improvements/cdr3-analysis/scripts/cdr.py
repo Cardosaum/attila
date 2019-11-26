@@ -336,9 +336,11 @@ if __name__ == "__main__":
     readline.set_completer_delims(' \t\n=')
     readline.parse_and_bind("tab: complete")
     try:
-        files = os.listdir('/home/matheus/mcs/study/code/bioinfo/data/analysis/')
+        data_path = '/home/matheus/mcs/study/code/bioinfo/data/analysis/'
+        files = os.listdir(data_path)
         for file in files:
-            if file.endswith('txt') and 'VH' in file and file.startswith('R') and 'S' in file:
+            if file.endswith('txt') and 'VH' in file and 'VCL' in file and os.path.getsize(os.path.join(data_path, file))/1000000 > 10:
+            # if file.endswith('txt') and 'VH' in file and file.startswith('R') and 'S' in file:
                 start = timeit.default_timer()
                 print(file)
                 write_cdr3_attributes(os.path.join('/home/matheus/mcs/study/code/bioinfo/data/analysis/', file))
