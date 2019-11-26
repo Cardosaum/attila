@@ -1,0 +1,1 @@
+cdr3,quantity,length,MW,AV,IP,flex,gravy,SSF_Helix,SSF_Turn,SSF_Sheet,p_A,p_C,p_D,p_E,p_F,p_G,p_H,p_I,p_K,p_L,p_M,p_N,p_P,p_Q,p_R,p_S,p_T,p_V,p_W,p_Y,aliphatic,aromatic,neutral,positive,negative,invalid
