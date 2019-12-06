@@ -17,6 +17,8 @@ import timeit
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import logging
 import csv
+import collections
+
 
 logger = logging.getLogger('cdrlog')
 hdlr = logging.FileHandler('cdrlog.log')
@@ -58,6 +60,8 @@ def extract_cdr3(file):
 
                 # Need to be avaluated in next loop
                 read = False
+    dic_cdr3 = sorted(dic_cdr3.items(), key=lambda kv: kv[1], reverse=True)
+    dic_cdr3 = collections.OrderedDict(dic_cdr3)
     return dic_cdr3
 
 
@@ -126,50 +130,54 @@ Hence,
 
     header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy', 'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', 'n_A', 'n_C', 'n_D', 'n_E', 'n_F', 'n_G', 'n_H', 'n_I', 'n_K', 'n_L', 'n_M', 'n_N', 'n_P', 'n_Q', 'n_R', 'n_S', 'n_T', 'n_V', 'n_W', 'n_Y', 'aliphatic', 'aromatic', 'neutral', 'positive', 'negative', 'invalid']
 
-    try:
-        with open(output_file, 'w') as out:
-            out = csv.writer(out)
-            out.writerow(header)
+
+    aa_error = 0
+    aa_total = 0
+
+    with open(output_file, 'w') as out:
+        out = csv.writer(out)
+        out.writerow(header)
+        for cdr3, quantity in extract_cdr3(file).items():
             try:
-                for cdr3, quantity in extract_cdr3(file).items():
-                    attributes = []
-                    # print(f'CDR3:\t{cdr3}'.ljust(60)+f'Quantity: {quantity}'.rjust(20))
-                    attributes.append(cdr3)
-                    attributes.append(str(quantity))
-                    attributes.append(str(len(cdr3)))
-                    prot = ProteinAnalysis(cdr3)
-                    attributes.append(f'{prot.molecular_weight():0.4f}')
-                    attributes.append(f'{prot.aromaticity():0.4f}')
-                    attributes.append(f'{prot.isoelectric_point():0.4f}')
-                    attributes.append(f'{aa_flex(cdr3)}')
-                    attributes.append(f'{prot.gravy():0.4f}')
-                    attributes.append(f'{prot.secondary_structure_fraction()[0]:0.4f}')
-                    attributes.append(f'{prot.secondary_structure_fraction()[1]:0.4f}')
-                    attributes.append(f'{prot.secondary_structure_fraction()[2]:0.4f}')
+                attributes = []
+                # print(f'CDR3:\t{cdr3}'.ljust(60)+f'Quantity: {quantity}'.rjust(20))
+                attributes.append(cdr3)
+                attributes.append(str(quantity))
+                attributes.append(str(len(cdr3)))
+                prot = ProteinAnalysis(cdr3)
+                attributes.append(f'{prot.molecular_weight():0.4f}')
+                attributes.append(f'{prot.aromaticity():0.4f}')
+                attributes.append(f'{prot.isoelectric_point():0.4f}')
+                attributes.append(f'{aa_flex(cdr3)}')
+                attributes.append(f'{prot.gravy():0.4f}')
+                attributes.append(f'{prot.secondary_structure_fraction()[0]:0.4f}')
+                attributes.append(f'{prot.secondary_structure_fraction()[1]:0.4f}')
+                attributes.append(f'{prot.secondary_structure_fraction()[2]:0.4f}')
 
-                    # preferred to count the amino acids instead of showing the percentage of them
-                    for num_of_fragment in prot.count_amino_acids().values():
-                      attributes.append(str(num_of_fragment))
+                # preferred to count the amino acids instead of showing the percentage of them
+                for num_of_fragment in prot.count_amino_acids().values():
+                    attributes.append(str(num_of_fragment))
 
-                    # Here is the code to put percentage
-                    # for percent_of_fragment in prot.get_amino_acids_percent().values():
-                        # attributes.append(f'{percent_of_fragment:0.4f}')
+                # Here is the code to put percentage
+                # for percent_of_fragment in prot.get_amino_acids_percent().values():
+                    # attributes.append(f'{percent_of_fragment:0.4f}')
 
-                    groups = aa_groups(cdr3)
-                    for k, v in groups.items():
-                        attributes.append(str(v))
-                        # TODO: ASA (accessibility) - (?)
-                        # TODO: Write all attributes to a file
-                    out.writerow(attributes)
+                groups = aa_groups(cdr3)
+                for k, v in groups.items():
+                    attributes.append(str(v))
+
+                out.writerow(attributes)
+                aa_total += 1
+
             except Exception as e:
-                print(f'\n\nERROR in \t{file}\n')
-                logger.error(f'Failed to parse file:\t{file}', repr(e))
-                logger.error(f'\tCDR3:\t{cdr3}', repr(e))
-                logger.error(f'\tQUANTITY:\t{quantity}', repr(e))
+                aa_error += 1
+                # TODO: return ambiguous cdr3 sequences too?
+                # print(f'\t{cdr3}\n')
+    
+    # TODO: return ambiguous cdr3 sequences too?
+    # print(f"Total: {aa_total}\nError: {aa_error}\nPercentage: {aa_error/aa_total}")
 
-    except Exception as e:
-        print(f'\n\nERROR in \t{file}\n')
-        logger.error(f'Failed to parse file:\t{file}', repr(e))
+
 
 
 def aa_flex(aa):
