@@ -4,7 +4,7 @@ cdr.py - Analyze an "aafreq.txt" input file and return all features of CDR3 sequ
 Usage:
        python3 cdr.py <INPUT_FILE> <OUTPUT_DIRECTORY>
 
-Copyright:  (c)  2019  Matheus Cardoso   <https://github.com/cardosaum>
+Copyright:  (c)  2019  Matheus Cardoso  <https://github.com/cardosaum>
 
 License:  Apache 2.0  <https://www.apache.org/licenses/LICENSE-2.0>
 '''
@@ -18,6 +18,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import logging
 import csv
 import collections
+import pathlib
 
 
 logger = logging.getLogger('cdrlog')
@@ -173,7 +174,7 @@ Hence,
                 aa_error += 1
                 # TODO: return ambiguous cdr3 sequences too?
                 # print(f'\t{cdr3}\n')
-    
+
     # TODO: return ambiguous cdr3 sequences too?
     # print(f"Total: {aa_total}\nError: {aa_error}\nPercentage: {aa_error/aa_total}")
 
@@ -213,7 +214,8 @@ flex = {
         'Y': ['0.615', '0.615', '0.004', '0.460', '0.461', '0.008', '0.567', '0.567', '0.005', '0.740', '0.741', '0.009']
         }
 
-
+def handle_files(directory, pattern, type='VH'):
+    for file in pathlib.Path(directory).rglob(pattern):
 
 
 if __name__ == "__main__":
