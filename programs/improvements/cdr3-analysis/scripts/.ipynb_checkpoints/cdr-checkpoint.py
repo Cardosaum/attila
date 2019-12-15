@@ -216,7 +216,7 @@ flex = {
 
 def handle_files(directory, pattern, type='VH'):
     for file in pathlib.Path(directory).rglob(pattern):
-        pass
+
 
 if __name__ == "__main__":
     import readline
