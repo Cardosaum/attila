@@ -101,7 +101,7 @@ attila_commands = {
         # Analysis settings
     # ----------------------------------------------------------------------------
 
-    settings = {
+settings = {
         'settings1': '',
         'settings2': '',
         'settings3': '',
@@ -134,7 +134,7 @@ attila_commands = {
 
 
 def greetings(clear=True):
-    """ Clear window and show Greetins """
+    """ Clear window and show Greetings """
 
     if clear:
         subprocess.Popen('clear', shell=True)
@@ -142,6 +142,7 @@ def greetings(clear=True):
     print('{:^132}'.format('ATTILA: Automated Tool for Immunoglobulin Analysis'))
     print('*'*132)
     print()
+
 
 def set_settings_regular(k, n):
     '''Ask user for an info and pass it to settings['settings'+str(n)]
@@ -283,49 +284,6 @@ def askConfig():
         else:
             print(ask_yes_or_no)
 
-if not askConfig():
-    set_settings_regular('Enter projec name', 1)
-    set_settings_project_directory(
-        'Enter directory to save the project', 2)
-    while True:
-        print('Reads are paired-end? [Y/N]')
-        paired_end = input().lower()
-        if paired_end == '' or paired_end == 'n' or paired_end == 'y':
-            if paired_end == 'y':
-                settings['settings{}'.format(4)] = 1
-                set_settings_file(
-                    'Enter the path of fastq file of VH R0 reads r1', 5)
-                set_settings_file(
-                    'Enter the path of fastq file of VH R0 reads r2', 6)
-                set_settings_file(
-                    'Enter the path of fastq file of VH RN reads r1', 7)
-                set_settings_file(
-                    'Enter the path of fastq file of VH RN reads r2', 8)
-                set_settings_file(
-                    'Enter the path of fastq file of VL R0 reads r1', 9)
-                set_settings_file(
-                    'Enter the path of fastq file of VL R0 reads r2', 10)
-                set_settings_file(
-                    'Enter the path of fastq file of VL RN reads r1', 11)
-                set_settings_file(
-                    'Enter the path of fastq file of VL RN reads r2', 12)
-                common_input_for_reads()
-                break
-            elif paired_end == 'n' or paired_end == '':
-                settings['settings{}'.format(4)] = 0
-                set_settings_file(
-                    'Enter the path of fastq file of VH R0', 13)
-                set_settings_file(
-                    'Enter the path of fastq file of VH RN', 14)
-                set_settings_file(
-                    'Enter the path of fastq file of VL R0', 15)
-                set_settings_file(
-                    'Enter the path of fastq file of VL RN', 16)
-                common_input_for_reads()
-                break
-
-        else:
-            print(ask_yes_or_no)
 
 # --------------------------------------------------------------------------------------------
             # Check settings
@@ -369,7 +327,7 @@ if exist_Configuration_File == '' or exist_Configuration_File == 'n':
                                 print(type(setting_to_change))
                                 if setting_to_change == 1:
                                     set_settings_regular(
-										'Enter projec name', 1)
+                                                                                'Enter projec name', 1)
                                 elif setting_to_change == 2:
                                     set_settings_project_directory(
                                         'Enter directory to save the project', 2)
@@ -552,11 +510,203 @@ if exist_Configuration_File == '' or exist_Configuration_File == 'n':
 
 
 
+def createConfig():
+    """ Create config for project if it's absent """
+
+    set_settings_regular('Enter projec name', 1)
+    set_settings_project_directory(
+        'Enter directory to save the project', 2)
+    while True:
+        print('Reads are paired-end? [Y/N]')
+        paired_end = input().lower()
+        if paired_end == '' or paired_end == 'n' or paired_end == 'y':
+            if paired_end == 'y':
+                settings['settings{}'.format(4)] = 1
+                set_settings_file(
+                    'Enter the path of fastq file of VH R0 reads r1', 5)
+                set_settings_file(
+                    'Enter the path of fastq file of VH R0 reads r2', 6)
+                set_settings_file(
+                    'Enter the path of fastq file of VH RN reads r1', 7)
+                set_settings_file(
+                    'Enter the path of fastq file of VH RN reads r2', 8)
+                set_settings_file(
+                    'Enter the path of fastq file of VL R0 reads r1', 9)
+                set_settings_file(
+                    'Enter the path of fastq file of VL R0 reads r2', 10)
+                set_settings_file(
+                    'Enter the path of fastq file of VL RN reads r1', 11)
+                set_settings_file(
+                    'Enter the path of fastq file of VL RN reads r2', 12)
+                common_input_for_reads()
+                break
+            elif paired_end == 'n' or paired_end == '':
+                settings['settings{}'.format(4)] = 0
+                set_settings_file(
+                    'Enter the path of fastq file of VH R0', 13)
+                set_settings_file(
+                    'Enter the path of fastq file of VH RN', 14)
+                set_settings_file(
+                    'Enter the path of fastq file of VL R0', 15)
+                set_settings_file(
+                    'Enter the path of fastq file of VL RN', 16)
+                common_input_for_reads()
+                break
+
+def showConfig():
+    while True:
+    os.system('clear')
+    print('-'*132)
+    print('Settings for current analysis'.center(132))
+    print('-'*132)
+    print('\n\n')
+    print(f'(1) - Project name: {settings["settings1"]}')
+    print(f'(2) - Project path: {settings["settings2"]}')
+    print(f'(3) - Attila package path: {settings["settings3"]}')
+    if settings['settings4'] == 1:
+        print('(4) - Reads are paired_end: Yes')
+        print(f'(5) - VH R0 reads r1: {settings["settings5"]}')
+        print(f'(6) - VH R0 reads r2: {settings["settings6"]}')
+        print(f'(7) - VH RN reads r1: {settings["settings7"]}')
+        print(f'(8) - VH RN reads r2: {settings["settings8"]}')
+        print(f'(9) - VL R0 reads r1: {settings["settings9"]}')
+        print(f'(10) - VL R0 reads r2: {settings["settings10"]}')
+        print(f'(11) - VL RN reads r1: {settings["settings11"]}')
+        print(f'(12) - VL RN reads r2: {settings["settings12"]}')
+        print(f'(17) - IgBlast package path: {settings["settings17"]}')
+        print(f'(18) - Minimum read length: {settings["settings18"]}')
+        print(f'(19) - Minimum base quality: {settings["settings19"]}')
+        print(f'(20) - Number of candidates: {settings["settings20"]}')
+        print(f'{"*"*132}')
+        while True:
+            print('Is all previous settings correct? [Y/N]')
+            is_all_correct = input().lower()
+            if is_all_correct in ['', 'n', 'y']:
+                if is_all_correct in ['', 'n']:
+                    while True:
+                        print('Enter corresponding integer to correct settings: ')
+                        try:
+                            setting_to_change = int(input())
+                            print(setting_to_change)
+                            print(type(setting_to_change))
+                            if setting_to_change == 1:
+                                set_settings_regular(
+                                                                                'Enter projec name', 1)
+                            elif setting_to_change == 2:
+                                set_settings_project_directory(
+                                    'Enter directory to save the project', 2)
+                            #elif setting_to_change == 3:
+                            elif setting_to_change == 4:
+                                set_settings_regular('Reads are paired-end? [Y/N]', 4)
+
+                            elif setting_to_change == 5:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VH R0 reads r1', 5)
+                            elif setting_to_change == 6:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VH R0 reads r2', 6)
+                            elif setting_to_change == 7:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VH RN reads r1', 7)
+                            elif setting_to_change == 8:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VH RN reads r2', 8)
+                            elif setting_to_change == 9:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VL R0 reads r1', 9)
+                            elif setting_to_change == 10:
+                                set_settings_file('Enter the path of fastq file of VL R0 reads r2', 10)
+                            elif setting_to_change == 11:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VL RN reads r1', 11)
+                            elif setting_to_change == 12:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VL RN reads r2', 12)
+
+                            # TODO - change settings
+                            break
+                        except:
+                            print('Please, enter an integer number.')
+                            print('''\nExample:
+                If you want to change "Project name", enter the integer number "1"''')
+
+                    break
+                else:
+                    break
+            else:
+                print(ask_yes_or_no)
+        break
+
+    else:
+        print('(4) - Reads are paired_end: No')
+        print(f'(13) - VH R0: {settings["settings13"]}')
+        print(f'(14) - VH RN: {settings["settings14"]}')
+        print(f'(15) - VL R0: {settings["settings15"]}')
+        print(f'(16) - VL RN: {settings["settings16"]}')
+        print(f'(17) - IgBlast package path: {settings["settings17"]}')
+        print(f'(18) - Minimum read length: {settings["settings18"]}')
+        print(f'(19) - Minimum base quality: {settings["settings19"]}')
+        print(f'(20) - Number of candidates: {settings["settings20"]}')
+        print(f'{"*"*132}')
+        while True:
+            print('Is all previous settings correct? [Y/N]')
+            is_all_correct = input().lower()
+            if is_all_correct in ['', 'n', 'y']:
+                if is_all_correct in ['', 'n']:
+                    while True:
+                        print(
+                            'Enter corresponding integer to correct settings: ')
+                        try:
+                            setting_to_change = int(input())
+                            if setting_to_change == 13:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VH R0', 13)
+                            elif setting_to_change == 14:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VH RN', 14)
+                            elif setting_to_change == 15:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VL R0', 15)
+                            elif setting_to_change == 16:
+                                set_settings_file(
+                                    'Enter the path of fastq file of VL RN', 16)
+                            elif setting_to_change == 17:
+                                common_input_for_reads(
+                                    'save IgBlast package path', 17)
+                            elif setting_to_change == 18:
+                                minimum_read_length(
+                                    'Minimum read length', 18)
+                            elif setting_to_change == 19:
+                                minimum_base_quality(
+                                    'minimum base quality', 19)
+                            elif setting_to_change == 20:
+                                number_of_candidates_to_rank(
+                                    'Number of candidates ranked', 20)
+                            break
+                        except:
+                            print('Please, enter an integer number.')
+                    break
+                else:
+                    break
+            else:
+                print(ask_yes_or_no)
+        break
+
+
+
+
+
 def main():
     """ Execute main program """
 
     greetings()
-    
+    existConfig = askConfig()
+    if not existConfig:
+        createConfig()
+    else:
+        # TODO: create function to use existing config
+        pass
+
 
 except KeyboardInterrupt:
     print('\n\nExiting ATTILA...\n')
