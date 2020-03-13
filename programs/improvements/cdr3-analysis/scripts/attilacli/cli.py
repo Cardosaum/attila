@@ -98,6 +98,11 @@ vals['yn_hint'] = hint()
 vals['default_char_sep'] = '*'
 vals['default_prompt'] = '> '
 
+def config_default_file_names():
+    """set default configuration file names"""
+    for vX in ['VH', 'VL']:
+        vals[f'default_config_file_{vX.lower()}'] = f"{s[1][-1]}_{vX}.cfg"
+
 # attila settings
     # settings[1]      Project name
     # settings[2]      Project path
@@ -128,6 +133,14 @@ Output expected:
 
 s = {
     '1': ['Project name', ''],
+    '2': ['Project path', ''],
+    '3': ['Attila package path', ''],
+    '4': ['Reads are paired-end (True/False)', ''],
+    '5': ['VH R0 reads r1 path', ''],
+    '6': ['VH R0 reads r2 path', ''],
+    '7': ['VH RN reads r1 path', ''],
+    '8': ['VH RN reads r2 path', ''],
+    '9': ['VL R0 reads r1 path', ''],
     '10': ['VL R0 reads r2 path', ''],
     '11': ['VL RN reads r1 path', ''],
     '12': ['VL RN reads r2 path', ''],
@@ -138,17 +151,9 @@ s = {
     '17': ['IgBlast package path', ''],
     '18': ['Minimum read length', ''],
     '19': ['Minimum base quality', ''],
-    '2': ['Project path', ''],
     '20': ['Number of candidates to rank', ''],
     '21': ['VH file configuration path', ''],
-    '22': ['VL file configuration path', ''],
-    '3': ['Attila package path', ''],
-    '4': ['Reads are paired-end (True/False)', ''],
-    '5': ['VH R0 reads r1 path', ''],
-    '6': ['VH R0 reads r2 path', ''],
-    '7': ['VH RN reads r1 path', ''],
-    '8': ['VH RN reads r2 path', ''],
-    '9': ['VL R0 reads r1 path', '']
+    '22': ['VL file configuration path', '']
     }
     """
     settings_names = ['Project name', 'Project path', 'Attila package path', 'Reads are paired-end (True/False)', 'VH R0 reads r1 path', 'VH R0 reads r2 path', 'VH RN reads r1 path', 'VH RN reads r2 path', 'VL R0 reads r1 path', 'VL R0 reads r2 path', 'VL RN reads r1 path', 'VL RN reads r2 path', 'VH R0 path', 'VH RN path', 'VL R0 path', 'VL RN path', 'IgBlast package path', 'Minimum read length', 'Minimum base quality', 'Number of candidates to rank', 'VH file configuration path', 'VL file configuration path']
@@ -326,7 +331,7 @@ def user_ask_setting(text:str, num:int, path=False, empty=False, file=False, fas
             else:
                 answer = str(path)
 
-        s[str(num)] = answer
+        s[str(num)][-1] = answer
         break
     return s[str(num)]
 
@@ -350,7 +355,7 @@ def user_ask_reads_paired_end(paired:bool):
                 num += 1
 
 
-def user_show_configs_all():
+def user_show_configs_all(s:collections.defaultdict, fill_character='_', text=' Current User Configuration '):
     """Print all current configs to user"""
 
     # For `settings` number and value, print it's value to user
@@ -359,36 +364,58 @@ def user_show_configs_all():
     final_text = ''
     # This first loop is for get max length needed
     for n, v in s.items():
-        t1 = f"· ({n}) {v[0]}:".ljust(l)
-        t2 = f"\t {v[-1]}"
-        t3 = t1 + t2
-        if len(t3) > m:
-            m = len(t3)
+        t1 = f"· ({n}) {v[0]}:\t ".ljust(l)
+        # t2 = f"\t {v[-1]}"
+        # t3 = t1 + t2
+        if len(t1) > m:
+            m = len(t1)
 
+    print()
+    print(vals['default_char_sep'] * vals['terminal_size'])
+    print(text.center(vals['terminal_size']))
+    print(vals['default_char_sep'] * vals['terminal_size'])
     print()
     # This loop actualy print the correct message to user
     for n, v in s.items():
-        t1 = f"· ({n}) {v[0]}:".ljust(m)
-        t2 = f"\t {v[-1]}"
+        t1 = f"· ({n}) {v[0]}: ".ljust(m, fill_character)
+        t2 = f" {v[-1]}"
         t3 = t1 + t2
         print(t3)
+    print()
 
 def user_ask_config_change_one():
     """Ask user to change one specific configuration"""
 
-    print('Which configuration do you want to change?')
-    c_num = input('> ').strip()
-    if not c_num.isnumeric():
-        g = [int(i) for i in s.keys()]
-        print(f'Please, you must insert a *Valid Integer Number*.\nThe valid ones are from "{min(g)}" to "{max(g)}"')
+    g = [int(i) for i in s.keys()]
+    while True:
+        print()
+        print('Which configuration do you want to change?')
+        try:
+            c_num = int(input('> ').strip())
+        except:
+            print(f'Please, you must insert a *Valid Integer Number*.\nThe valid ones are in range "{min(g)}-{max(g)}"\n')
+            continue
+        if c_num < min(g) or c_num > max(g):
+            print(f'Please, you must insert a *Valid Integer Number*.\nThe valid ones are in range "{min(g)}-{max(g)}"\n')
+
+        else:
+            break
+    return c_num
 
 
 def user_ask_configs_all():
     """Show user all current configs and ask if all of them are correct.
     If they are not correct, show a menu to let user change the wrong ones.
     """
+    global s
 
-    user_show_configs_all()
+    while True:
+        user_show_configs_all(s)
+        change = user_ask_yn('Do you want to change any configuration?')
+        if not change:
+            break
+        setting_num = user_ask_config_change_one()
+        user_ask_default_settings(setting_num)
 
 
 def user_ask_default_settings(n):
@@ -398,11 +425,10 @@ def user_ask_default_settings(n):
     elif n == 2:
         user_ask_setting("Enter directory to save the project:", 2, path=True)
     elif n == 3:
-        pass
-        # TODO: 
+        s['3'][-1] = pathlib.Path(__file__).resolve()
     elif n == 4:
-        s['4'] = user_ask_yn("Reads are paired-end?") 
-        user_ask_reads_paired_end(s['4'])
+        s['4'][-1] = user_ask_yn("Reads are paired-end?") 
+        user_ask_reads_paired_end(s['4'][-1])
     elif n == 18:
         user_ask_setting("Minimum read length:", 18, default=300)
     elif n == 19:
@@ -411,6 +437,8 @@ def user_ask_default_settings(n):
         user_ask_setting("Enter number of candidates to rank:", 20, inputInt=True)
 
 
+def config_create_file(file:bool):
+    pass
 
 def flow():
     """Flow control for program"""
@@ -426,6 +454,11 @@ def flow():
         # TODO: if configuration does not already exists, create it
         for f in range(utils_settings_get_number_of_settings(s)):
             user_ask_default_settings(f)
+
+        # ask user if all inserted configs are indeed correct
+        user_ask_configs_all()
+
+        # TODO: now, we need to write the configs to a file
 
     # Now that we have all the configurations, ask user if this all is correct
     # TODO: 
@@ -443,10 +476,18 @@ def test():
     # user_ask_setting("Enter number of candidates to rank:", 20, inputInt=True)
     # pprint.pprint(s)
     # print(pathlib.Path(__file__).resolve())
-    print(utils_settings_get_number_of_settings(s))
+    # print(utils_settings_get_number_of_settings(s))
+    # pprint.pprint(s)
+    # pprint.pprint(s[str(1)][-1])
+    # s[str(1)][-1] = 'FOO'
+    # pprint.pprint(s)
+    # pprint.pprint(s[str(1)][-1])
+
+    user_ask_configs_all()
+
     pass
 
 
 if __name__ == '__main__':
-    # main()
-    test()
+    main()
+    # test()
