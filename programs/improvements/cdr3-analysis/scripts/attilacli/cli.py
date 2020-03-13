@@ -101,7 +101,7 @@ vals['default_prompt'] = '> '
 def config_default_file_names():
     """set default configuration file names"""
     for vX in ['VH', 'VL']:
-        vals[f'default_config_file_{vX.lower()}'] = f"{s[1][-1]}_{vX}.cfg"
+        vals[f'default_config_file_{vX.lower()}'] = pathlib.Path(f"{utils_config_get_settings_value(1)}_{vX}.cfg")
 
 # attila settings
     # settings[1]      Project name
@@ -158,7 +158,7 @@ s = {
     """
     settings_names = ['Project name', 'Project path', 'Attila package path', 'Reads are paired-end (True/False)', 'VH R0 reads r1 path', 'VH R0 reads r2 path', 'VH RN reads r1 path', 'VH RN reads r2 path', 'VL R0 reads r1 path', 'VL R0 reads r2 path', 'VL RN reads r1 path', 'VL RN reads r2 path', 'VH R0 path', 'VH RN path', 'VL R0 path', 'VL RN path', 'IgBlast package path', 'Minimum read length', 'Minimum base quality', 'Number of candidates to rank', 'VH file configuration path', 'VL file configuration path']
     for i in range(1, num+1):
-        s.setdefault(str(i), [settings_names[i-1], 'HAM'])
+        s.setdefault(str(i), [settings_names[i-1], ''])
     return s
 populate_settings()
 #############################################
@@ -418,14 +418,14 @@ def user_ask_configs_all():
         user_ask_default_settings(setting_num)
 
 
-def user_ask_default_settings(n):
+def user_ask_default_settings(n, manualy=True):
     """Set default settings to all user questions"""
     if n == 1:
         user_ask_setting("Enter project name:", 1, empty=False)
     elif n == 2:
         user_ask_setting("Enter directory to save the project:", 2, path=True)
     elif n == 3:
-        s['3'][-1] = pathlib.Path(__file__).resolve()
+        s['3'][-1] = pathlib.Path(__file__).resolve().parent.parent
     elif n == 4:
         s['4'][-1] = user_ask_yn("Reads are paired-end?") 
         user_ask_reads_paired_end(s['4'][-1])
@@ -435,10 +435,74 @@ def user_ask_default_settings(n):
         user_ask_setting("Minimum base quality:", 19, default=20)
     elif n == 20:
         user_ask_setting("Enter number of candidates to rank:", 20, inputInt=True)
+    else:
+        if manualy:
+            print(f'Sorry, but the setting number {n} is not intended to be configured manualy.')
+
+def utils_config_get_settings_value(n:int):
+    return s[str(n)][-1]
 
 
-def config_create_file(file:bool):
-    pass
+def config_create_file(file:pathlib.Path):
+    """Create configuration files"""
+
+    # TODO: This file can be way better if we use a more standard format of file
+    #       such as JSON. I only wrote this function for backward compatibility
+    #       reasons.
+    #       Can we use a more suitable format in later versions?
+    #       - Matheus Cardoso , 12/03/2020.
+
+    # set a helper variable
+    config_default_file_names()
+
+    # just an alias
+    gv = utils_config_get_settings_value
+
+    # create file for VH and VL reads
+    for f in ['VH', 'VL']:
+        if f == 'VH':
+            t = 0
+        else:
+            t = 1
+        if gv(4):
+            gv4 = 1
+        else:
+            gv4 = 0
+        text = []
+        text.append('-' * 70)
+        text.append("# [ Section: files and directories ]")
+        text.append(f"projectname: {gv(1)}")
+        text.append(f"projectdir: {gv(2)}")
+        text.append(f"packagedir: {gv(3)}")
+        text.append(f"igblastdir: {gv(17)}")
+        if f == 'VH' and gv(4):
+            text.append(f"input1r1dir: {gv(5)}")
+            text.append(f"input1r2dir: {gv(6)}")
+            text.append(f"input2r1dir: {gv(7)}")
+            text.append(f"input2r2dir: {gv(8)}")
+        if f == 'VH' and not gv(4):
+            text.append(f"input1dir: {gv(13)}")
+            text.append(f"input2dir: {gv(14)}")
+        if f == 'VL' and gv(4):
+            text.append(f"input1r1dir: {gv(9)}")
+            text.append(f"input1r2dir: {gv(10)}")
+            text.append(f"input2r1dir: {gv(11)}")
+            text.append(f"input2r2dir: {gv(12)}")
+        if f == 'VL' and not gv(4):
+            text.append(f"input1dir: {gv(15)}")
+            text.append(f"input2dir: {gv(16)}")
+        text.append("# [ Section: analysis arguments ]")
+        text.append(f"libtype: {t}")
+        text.append(f"listsize: {gv(20)}")
+        text.append(f"pairedend: {gv4}")
+        text.append(f"minlen: {gv(18)}")
+        text.append(f"minqual: {gv(19)}")
+        final_text = '\n'.join(text)
+        with vals[f'default_config_file_{f.lower()}'].open('w') as c:
+            c.write(final_text)
+
+
+
 
 def flow():
     """Flow control for program"""
@@ -453,12 +517,14 @@ def flow():
     else:
         # TODO: if configuration does not already exists, create it
         for f in range(utils_settings_get_number_of_settings(s)):
-            user_ask_default_settings(f)
+            user_ask_default_settings(f, manualy=False)
 
         # ask user if all inserted configs are indeed correct
         user_ask_configs_all()
 
         # TODO: now, we need to write the configs to a file
+        config_create_file(pathlib.Path(utils_config_get_settings_value(1)))
+
 
     # Now that we have all the configurations, ask user if this all is correct
     # TODO: 
@@ -483,7 +549,8 @@ def test():
     # pprint.pprint(s)
     # pprint.pprint(s[str(1)][-1])
 
-    user_ask_configs_all()
+    config_create_file(pathlib.Path('arquvs'))
+    # user_ask_configs_all()
 
     pass
 
