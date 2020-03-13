@@ -127,32 +127,33 @@ def populate_settings(num=22):
 Output expected:
 
 s = {
-    '1': '',
-    '2': '',
-    '3': '',
-    '4': '',
-    '5': '',
-    '6': '',
-    '7': '',
-    '8': '',
-    '9': '',
-    '10': '',
-    '11': '',
-    '12': '',
-    '13': '',
-    '14': '',
-    '15': '',
-    '16': '',
-    '17': '',
-    '18': '',
-    '19': '',
-    '20': '',
-    '21': '',
-    '22': '',
-}
+    '1': ['Project name', ''],
+    '10': ['VL R0 reads r2 path', ''],
+    '11': ['VL RN reads r1 path', ''],
+    '12': ['VL RN reads r2 path', ''],
+    '13': ['VH R0 path', ''],
+    '14': ['VH RN path', ''],
+    '15': ['VL R0 path', ''],
+    '16': ['VL RN path', ''],
+    '17': ['IgBlast package path', ''],
+    '18': ['Minimum read length', ''],
+    '19': ['Minimum base quality', ''],
+    '2': ['Project path', ''],
+    '20': ['Number of candidates to rank', ''],
+    '21': ['VH file configuration path', ''],
+    '22': ['VL file configuration path', ''],
+    '3': ['Attila package path', ''],
+    '4': ['Reads are paired-end (True/False)', ''],
+    '5': ['VH R0 reads r1 path', ''],
+    '6': ['VH R0 reads r2 path', ''],
+    '7': ['VH RN reads r1 path', ''],
+    '8': ['VH RN reads r2 path', ''],
+    '9': ['VL R0 reads r1 path', '']
+    }
     """
+    settings_names = ['Project name', 'Project path', 'Attila package path', 'Reads are paired-end (True/False)', 'VH R0 reads r1 path', 'VH R0 reads r2 path', 'VH RN reads r1 path', 'VH RN reads r2 path', 'VL R0 reads r1 path', 'VL R0 reads r2 path', 'VL RN reads r1 path', 'VL RN reads r2 path', 'VH R0 path', 'VH RN path', 'VL R0 path', 'VL RN path', 'IgBlast package path', 'Minimum read length', 'Minimum base quality', 'Number of candidates to rank', 'VH file configuration path', 'VL file configuration path']
     for i in range(1, num+1):
-        s.setdefault(str(i), '')
+        s.setdefault(str(i), [settings_names[i-1], 'HAM'])
     return s
 populate_settings()
 #############################################
@@ -238,6 +239,20 @@ def utils_str_path_absolute(path:str):
     p = pathlib.Path(path).resolve()
     return p
 
+def utils_str_length_bigger(st:collections.defaultdict):
+    """Return the longest string length in a given list"""
+    m = 0
+    for i in st.items():
+        i = i[1][0]
+        if len(i) > m:
+            m = len(i)
+    return m
+
+def utils_settings_get_number_of_settings(st:collections.defaultdict):
+    """Return the maximun value of specified settings in `settings` dictionary"""
+    m = max([ int(i[0]) for i in st.items() ])
+    return m
+
 def user_ask_yn(text):
     """Ask user a simple 'Yes' or 'No' question"""
 
@@ -257,23 +272,166 @@ def user_ask_config():
     exist_config = user_ask_yn('Configuration files exist?')
     return exist_config
 
-def user_ask_setting(text:str, num:int):
+def user_ask_setting(text:str, num:int, path=False, empty=False, file=False, fastq=False, default=None, inputInt=False):
     """Ask user for setting number `num`"""
-    print(text)
-    answer = input(vals['default_prompt'])
-    s[str(num)] = answer
+
+    # path can't be a empty string `""`
+    if path:
+        empty = False
+
+    # file must have a validated path
+    if file:
+        path = True
+
+    # set valid fastq files
+    if fastq:
+        fastq = ['.fq', '.fastq']
+
+    # if `default` is true, empty inputs are allowed.
+    # also, format `text` to show this `default` value
+    if default:
+        empty = True
+        text = text.strip() + f"\n(default={default})"
+
+    while True:
+        print(text)
+        answer = input(vals['default_prompt'])
+
+        # if empty is `False`, tell it for user and ask again
+        if not empty and not answer:
+            print('This configuration can *not* be empty. Please, insert a valid value.\n')
+            continue
+        if inputInt:
+            if default and not answer:
+                answer = default
+            try:
+                answer = int(answer)
+                if answer <= 0:
+                    raise ValueError('This value must be a positive number')
+            except:
+                print('This configuration must be a *Positive Integer Number*.\n')
+                continue
+        if default and not answer:
+            answer = default
+        if path:
+            path = pathlib.Path(answer).expanduser().resolve()
+            if not file and not path.is_dir():
+                print(f"Path {path} is not a regular directory.\nPlease, choose a valid one.\n\n")
+                continue
+            elif file and not path.is_file():
+                print(f"File {path} is not a regular file.\nPlease, choose a valid one.\n\n")
+                continue
+            elif file and path.suffix not in fastq:
+                print(f"File {path} is a regular file, but it's extension is *not* a valid one.\nPlease, choose a file that have one of this valid extensions: \"{', '.join(fastq)}\"")
+            else:
+                answer = str(path)
+
+        s[str(num)] = answer
+        break
     return s[str(num)]
+
+def user_ask_reads_paired_end(paired:bool):
+    """Aks user for fastq files for all reads"""
+
+    # counter for `setting` number
+    if paired:
+        num = 5
+    else:
+        num = 13
+
+    for vX in ['H', 'L']:
+        for rX in ['0', 'N']:
+            if paired:
+                for readX in ['1', '2']:
+                    user_ask_setting(f"Enter path for fastq file of V{vX} R{rX} read r{readX}", num, file=True, fastq=True)
+                    num += 1
+            else:
+                user_ask_setting(f"Enter path for fastq file of V{vX} R{rX}", num, file=True, fastq=True)
+                num += 1
+
+
+def user_show_configs_all():
+    """Print all current configs to user"""
+
+    # For `settings` number and value, print it's value to user
+    l = utils_str_length_bigger(s)
+    m = 0
+    final_text = ''
+    # This first loop is for get max length needed
+    for n, v in s.items():
+        t1 = f"· ({n}) {v[0]}:".ljust(l)
+        t2 = f"\t {v[-1]}"
+        t3 = t1 + t2
+        if len(t3) > m:
+            m = len(t3)
+
+    print()
+    # This loop actualy print the correct message to user
+    for n, v in s.items():
+        t1 = f"· ({n}) {v[0]}:".ljust(m)
+        t2 = f"\t {v[-1]}"
+        t3 = t1 + t2
+        print(t3)
+
+def user_ask_config_change_one():
+    """Ask user to change one specific configuration"""
+
+    print('Which configuration do you want to change?')
+    c_num = input('> ').strip()
+    if not c_num.isnumeric():
+        g = [int(i) for i in s.keys()]
+        print(f'Please, you must insert a *Valid Integer Number*.\nThe valid ones are from "{min(g)}" to "{max(g)}"')
+
+
+def user_ask_configs_all():
+    """Show user all current configs and ask if all of them are correct.
+    If they are not correct, show a menu to let user change the wrong ones.
+    """
+
+    user_show_configs_all()
+
+
+def user_ask_default_settings(n):
+    """Set default settings to all user questions"""
+    if n == 1:
+        user_ask_setting("Enter project name:", 1, empty=False)
+    elif n == 2:
+        user_ask_setting("Enter directory to save the project:", 2, path=True)
+    elif n == 3:
+        pass
+        # TODO: 
+    elif n == 4:
+        s['4'] = user_ask_yn("Reads are paired-end?") 
+        user_ask_reads_paired_end(s['4'])
+    elif n == 18:
+        user_ask_setting("Minimum read length:", 18, default=300)
+    elif n == 19:
+        user_ask_setting("Minimum base quality:", 19, default=20)
+    elif n == 20:
+        user_ask_setting("Enter number of candidates to rank:", 20, inputInt=True)
+
+
 
 def flow():
     """Flow control for program"""
     user_greetings()
+
+    # Ask user if configutarion files already exist
     if user_ask_config():
-        # TODO: if configuration does already exists, use it
+        # if configuration does already exists, use it
+        user_ask_setting(f"Enter path for configuration file of V{vX} libraries", num)
         pass
 
     else:
-        # TODO: if configuration does not already exists, creat it
-        user_ask_setting("Enter project name:", 1)
+        # TODO: if configuration does not already exists, create it
+        for f in range(utils_settings_get_number_of_settings(s)):
+            user_ask_default_settings(f)
+
+    # Now that we have all the configurations, ask user if this all is correct
+    # TODO: 
+    pass
+
+
 
 
 def main():
@@ -281,7 +439,14 @@ def main():
     # TODO: 
     flow()
 
+def test():
+    # user_ask_setting("Enter number of candidates to rank:", 20, inputInt=True)
+    # pprint.pprint(s)
+    # print(pathlib.Path(__file__).resolve())
+    print(utils_settings_get_number_of_settings(s))
+    pass
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    test()
