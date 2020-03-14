@@ -103,6 +103,11 @@ def config_default_file_names():
     for vX in ['VH', 'VL']:
         vals[f'default_config_file_{vX.lower()}'] = pathlib.Path(f"{utils_config_get_settings_value(1)}_{vX}.cfg")
 
+def config_default_attila_program_names():
+    """set default attila programs' names"""
+    vals['attila_programs'] = ['autoiganalysis3.pl', 'translateab9', 'frequency_counter3.pl', 'find_duplicates7.pl', 'get_nsequences.pl', 'numberab.pl', 'convertofasta.pl', 'get_ntsequence2.pl', 'rscript_creator.pl', 'html_creator.pl', 'parserid.pl', 'statscript_creator.pl']
+
+config_default_attila_program_names()
 # attila settings
     # settings[1]      Project name
     # settings[2]      Project path
@@ -370,6 +375,7 @@ def user_show_configs_all(s:collections.defaultdict, fill_character='_', text=' 
         if len(t1) > m:
             m = len(t1)
 
+    subprocess.Popen('clear', shell=True)
     print()
     print(vals['default_char_sep'] * vals['terminal_size'])
     print(text.center(vals['terminal_size']))
@@ -418,6 +424,18 @@ def user_ask_configs_all():
         user_ask_default_settings(setting_num)
 
 
+def utils_config_get_attila_packge_path():
+    """Get path where attila is saved"""
+
+    p = list(pathlib.Path(__file__).parents)
+    for i in p:
+        if str(i).endswith(str(pathlib.Path.joinpath(pathlib.Path('attila'), 'programs'))):
+            i = i.parent
+            return i
+
+    # If we couldn't find the path, raise a error
+    raise FileNotFoundError('Attila package directory could not be found.')
+
 def user_ask_default_settings(n, manualy=True):
     """Set default settings to all user questions"""
     if n == 1:
@@ -425,7 +443,7 @@ def user_ask_default_settings(n, manualy=True):
     elif n == 2:
         user_ask_setting("Enter directory to save the project:", 2, path=True)
     elif n == 3:
-        s['3'][-1] = pathlib.Path(__file__).resolve().parent.parent
+        s['3'][-1] = utils_config_get_attila_packge_path()
     elif n == 4:
         s['4'][-1] = user_ask_yn("Reads are paired-end?") 
         user_ask_reads_paired_end(s['4'][-1])
@@ -502,6 +520,65 @@ def config_create_file(file:pathlib.Path):
             c.write(final_text)
 
 
+def config_create_symlinks(path:pathlib.Path, dir_symlink="ATTILASymLinks"):
+    """create all needed symlinks for project.
+    `path` correspond to `s['2'][-1]`. i.e. `Project path` specified by the user
+    """
+
+    # first, let's figure out if the Symlink directory already exists
+    if path.exists():
+        # TODO: what we are supposed to do if this directory already exists?
+        raise FileExistsError('ATTILA is not yet configured to handle a Symlink Directory that already exists.\n\nPlease contact either:\n\n· Waldeyr (https://github.com/waldeyr)\n\nor\n\n· Matheus Cardoso (https://github.com/cardosaum)')
+
+    # If symlinks' directory does not exists, we'll create it, with all needed files
+    else:
+
+        symlink_path = pathlib.Path.joinpath(path, dir_symlink)
+        pathlib.Path.mkdir(symlink_path, parents=True)
+
+        for p in vals['attila_programs']:
+            source_path = pathlib.Path.joinpath(utils_config_get_settings_value(3), 'programs', p)
+            dest_path = pathlib.Path.joinpath(symlink_path, p)
+            dest_path.symlink_to(source_path)
+
+
+def config_run_analisys(path:pathlib.Path):
+    """create needed directories and run analysis"""
+
+    subprocess.Popen('clear', shell=True)
+
+    # First, let's create the needed folders
+    print('Creating project directory')
+
+    jp = pathlib.Path.joinpath
+    directories = []
+    project_path = jp(utils_config_get_settings_value(2), utils_config_get_settings_value(1))
+    report_path = jp(project_path, 'Report')
+
+    directories.append(project_path)
+    directories.append(report_path)
+
+    [ pathlib.Path.mkdir(i, parents=True) for i in directories ]
+
+    # Now, we run the analisys
+    for vX in ['VH', 'VL']:
+
+        print(f'Running {vX} analysis ...')
+    
+        vx_error_log = pathlib.Path.joinpath(project_path, f'{vX.lower()}error.log')
+        symlink_path = pathlib.Path.joinpath(utils_config_get_attila_packge_path(), 'ATTILASymLinks')
+        perl_file = pathlib.Path.joinpath(symlink_path, 'autoiganalysis3.pl')
+        subprocess.Popen(f'time perl {perl_file} {vx_error_log}', shell=True)
+
+        print('-' * vals['terminal_size'])
+        print(f'{vX} Analysis Completed')
+        print('-' * vals['terminal_size'])
+
+
+def config_create_web_page():
+    """
+
+
 
 
 def flow():
@@ -522,8 +599,11 @@ def flow():
         # ask user if all inserted configs are indeed correct
         user_ask_configs_all()
 
-        # TODO: now, we need to write the configs to a file
+        # now, we need to write the configs to a file
         config_create_file(pathlib.Path(utils_config_get_settings_value(1)))
+
+        # and, finaly, we will create the relevant symlinks
+        config_create_symlinks(utils_config_get_settings_value(2))
 
 
     # Now that we have all the configurations, ask user if this all is correct
@@ -549,12 +629,15 @@ def test():
     # pprint.pprint(s)
     # pprint.pprint(s[str(1)][-1])
 
-    config_create_file(pathlib.Path('arquvs'))
+    print(pathlib.Path.joinpath(utils_config_get_attila_packge_path(), 'ATTILASymLinks'))
+
+
+    # config_create_file(pathlib.Path('arquvs'))
     # user_ask_configs_all()
 
     pass
 
 
 if __name__ == '__main__':
-    main()
-    # test()
+    # main()
+    test()
