@@ -327,6 +327,11 @@ def user_ask_setting(text:str, num:int, path=False, empty=False, file=False, fas
             path = pathlib.Path(answer).expanduser().resolve()
             if not file and not path.is_dir():
                 print(f"Path {path} is not a regular directory.\nPlease, choose a valid one.\n\n")
+                mkdir_yn = user_ask_yn(f'Do you want to create path:\n· "{path}"?')
+                if mkdir_yn:
+                    path.mkdir(parents=True)
+                    s[str(num)][-1] = answer
+                    break
                 continue
             elif file and not path.is_file():
                 print(f"File {path} is not a regular file.\nPlease, choose a valid one.\n\n")
@@ -375,7 +380,6 @@ def user_show_configs_all(s:collections.defaultdict, fill_character='_', text=' 
         if len(t1) > m:
             m = len(t1)
 
-    subprocess.Popen('clear', shell=True)
     print()
     print(vals['default_char_sep'] * vals['terminal_size'])
     print(text.center(vals['terminal_size']))
@@ -528,7 +532,18 @@ def config_create_symlinks(path:pathlib.Path, dir_symlink="ATTILASymLinks"):
     # first, let's figure out if the Symlink directory already exists
     if path.exists():
         # TODO: what we are supposed to do if this directory already exists?
-        raise FileExistsError('ATTILA is not yet configured to handle a Symlink Directory that already exists.\n\nPlease contact either:\n\n· Waldeyr (https://github.com/waldeyr)\n\nor\n\n· Matheus Cardoso (https://github.com/cardosaum)')
+        symlink_path = pathlib.Path.joinpath(path, dir_symlink)
+        pathlib.Path.mkdir(symlink_path, parents=True, exist_ok=True)
+
+        for p in vals['attila_programs']:
+            source_path = pathlib.Path.joinpath(utils_config_get_settings_value(3), 'programs', p)
+            dest_path = pathlib.Path.joinpath(symlink_path, p)
+            try:
+                dest_path.symlink_to(source_path)
+            except FileExistsError:
+                pass
+
+        # raise FileExistsError('ATTILA is not yet configured to handle a Symlink Directory that already exists.\n\nPlease contact either:\n\n· Waldeyr (https://github.com/waldeyr)\n\nor\n\n· Matheus Cardoso (https://github.com/cardosaum)')
 
     # If symlinks' directory does not exists, we'll create it, with all needed files
     else:
@@ -542,17 +557,17 @@ def config_create_symlinks(path:pathlib.Path, dir_symlink="ATTILASymLinks"):
             dest_path.symlink_to(source_path)
 
 
-def config_run_analisys(path:pathlib.Path):
+def config_run_analisys():
     """create needed directories and run analysis"""
 
-    subprocess.Popen('clear', shell=True)
+    # subprocess.Popen('clear', shell=True)
 
     # First, let's create the needed folders
     print('Creating project directory')
 
     jp = pathlib.Path.joinpath
     directories = []
-    project_path = jp(utils_config_get_settings_value(2), utils_config_get_settings_value(1))
+    project_path = jp(pathlib.Path(utils_config_get_settings_value(2)), utils_config_get_settings_value(1))
     report_path = jp(project_path, 'Report')
 
     directories.append(project_path)
@@ -566,7 +581,7 @@ def config_run_analisys(path:pathlib.Path):
         print(f'Running {vX} analysis ...')
     
         vx_error_log = pathlib.Path.joinpath(project_path, f'{vX.lower()}error.log')
-        symlink_path = pathlib.Path.joinpath(utils_config_get_attila_packge_path(), 'ATTILASymLinks')
+        symlink_path = pathlib.Path.joinpath(pathlib.Path(utils_config_get_settings_value(2)), 'ATTILASymLinks')
         perl_file = pathlib.Path.joinpath(symlink_path, 'autoiganalysis3.pl')
         subprocess.Popen(f'time perl {perl_file} {vx_error_log}', shell=True)
 
@@ -575,9 +590,73 @@ def config_run_analisys(path:pathlib.Path):
         print('-' * vals['terminal_size'])
 
 
-def config_create_web_page():
-    """
 
+
+def utils_files_find(path:pathlib.Path, pattern, num=1):
+    """find files in `path` by regex rules specified by `pattern`""" 
+
+    files = sorted(path.rglob(pattern))
+    return files
+
+def ff(path:pathlib.Path, pattern):
+    """An alias function for `utils_files_find`"""
+    return utils_files_find(path, pattern)
+
+
+def utils_find_vx(files:list, vx:str):
+    """find file belonging only to vX, where vX can assume either VH or VL"""
+    vx = vx.upper()
+    for i in files:
+        f = str(i).upper()
+        if vx in f:
+            pass
+            # print(i)
+        else:
+            print(i)
+
+
+
+
+def config_create_web_page():
+    """create the web page containing the results"""
+
+    project_path = pathlib.Path.joinpath(pathlib.Path(utils_config_get_settings_value(2)), utils_config_get_settings_value(1))
+    report_path = pathlib.Path.joinpath(project_path, 'Report')
+
+    project_path.mkdir(exist_ok=True)
+    report_path.mkdir(exist_ok=True, parents=True)
+
+    # a dictionary to store all nedded files
+    f = collections.defaultdict(dict)
+
+    for vX in ["VH", "VL"]:
+        f[f'numbered_{vX}'] = ff(project_path, f"*{vX}/*numbered.fasta")
+        f[f'germline_{vX}'] = ff(project_path, f"*{vX}/*germlineclassification.txt")
+        f[f'plot1_{vX}'] = ff(project_path, f"*length_{vX.lower()}.png")
+        f[f'plot2_{vX}'] = ff(project_path, f"*task_{vX.lower()}.png")
+
+    command = []
+    command.append("perl")
+    command.append(str(pathlib.Path.joinpath(pathlib.Path(utils_config_get_settings_value(2)), 'ATTILASymLinks', 'html_creator.pl')))
+    command = ' '.join(command)
+
+    command = f"{command} {f['numbered_VH']} {f['numbered_VL']} {f['germline_VH']} {f['germline_VL']} {report_path}/Report.html {plot1_VH} {plot2_VH} {plot1_VL} {plot2_VL} {pathlib.Path.joinpath(project, 'VH', 'vhSequenceCounting.csv')} {pathlib.Path.joinpath(project, 'VL', 'vlSequenceCounting.csv')} {pathlib.Path.joinpath(report_path, 'vhoutputRstats.txt')} {pathlib.Path.joinpath(report_path, 'vloutputRstats.txt')} > {pathlib.Path.joinpath(report_path, 'webpage.log')} 2>&1"
+    subprocess.Popen(command)
+
+def config_check_analisys_result():
+    """check if analysis suceeded"""
+
+    project_path = pathlib.Path.joinpath(utils_config_get_settings_value(2), utils_config_get_settings_value(1))
+    report_path = pathlib.Path.joinpath(project_path, 'Report')
+    webpage_file = pathlib.Path.joinpath(report_path, 'webpage.log')
+    with webpage_file.open() as f:
+        text = f.read()
+        if text:
+            print('Could not create analysis report')
+            return False
+        else:
+            print('Analysis report is ready!')
+            return True
 
 
 
@@ -603,7 +682,12 @@ def flow():
         config_create_file(pathlib.Path(utils_config_get_settings_value(1)))
 
         # and, finaly, we will create the relevant symlinks
-        config_create_symlinks(utils_config_get_settings_value(2))
+        config_create_symlinks(pathlib.Path(utils_config_get_settings_value(2)))
+
+        # Now we only need to run the analisys, create the webpage and check their result
+        config_run_analisys()
+        config_create_web_page()
+        config_check_analisys_result()
 
 
     # Now that we have all the configurations, ask user if this all is correct
@@ -615,7 +699,6 @@ def flow():
 
 def main():
     """Execute main program"""
-    # TODO: 
     flow()
 
 def test():
@@ -629,7 +712,13 @@ def test():
     # pprint.pprint(s)
     # pprint.pprint(s[str(1)][-1])
 
-    print(pathlib.Path.joinpath(utils_config_get_attila_packge_path(), 'ATTILASymLinks'))
+    # g = ff(pathlib.Path.joinpath(utils_config_get_attila_packge_path()), "*V[HL]*")
+    # g = ff(pathlib.Path("/home/matheus/trash_mcs/tm/t"), "*vh/*fasta")
+    # pprint.pprint(g)
+    # utils_find_vx(g, "vx")
+
+    # s['2'][-1] = pathlib.Path(__file__).parent.parent.parent.parent.parent.parent
+    # config_create_web_page()
 
 
     # config_create_file(pathlib.Path('arquvs'))
@@ -639,5 +728,5 @@ def test():
 
 
 if __name__ == '__main__':
-    # main()
-    test()
+    main()
+    # test()
