@@ -118,16 +118,15 @@ will be save.
 Hence,
 
 <file>: absolute path to analysed file
-<output>: absolute path to directory to save result analysis
+<output>: absolute path to output file
     '''
 
     # Write HEADER to file
-    if not os.path.isdir(output):
+    output_file = pathlib.Path(output).resolve()
+
+    if not output_file.parent.is_dir():
         raise EOFError('<output> variable must be a valid directory')
 
-    name = os.path.basename(os.path.splitext(file)[0])
-    output_name = f'{prefix}{name}{suffix}.csv'
-    output_file = os.path.join(output, output_name)
 
     header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy', 'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', 'n_A', 'n_C', 'n_D', 'n_E', 'n_F', 'n_G', 'n_H', 'n_I', 'n_K', 'n_L', 'n_M', 'n_N', 'n_P', 'n_Q', 'n_R', 'n_S', 'n_T', 'n_V', 'n_W', 'n_Y', 'aliphatic', 'aromatic', 'neutral', 'positive', 'negative', 'invalid']
 
@@ -135,7 +134,7 @@ Hence,
     aa_error = 0
     aa_total = 0
 
-    with open(output_file, 'w') as out:
+    with output_file.open("w") as out:
         out = csv.writer(out)
         out.writerow(header)
         for cdr3, quantity in extract_cdr3(file).items():
