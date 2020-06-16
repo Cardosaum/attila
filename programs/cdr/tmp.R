@@ -50,6 +50,7 @@ cdr_df %>% mutate(cdrp = quantity/sum(quantity)) %>%
 cdr %<>% select(cdr3, cdrp, everything()) %>% 
             arrange(-cdrp, .by_group = TRUE)
 
-ggplot(cdr) +
-    geom_point(aes(cdrp, MW, color = file)) +
+cdr %>% slice_head(n = 1) %>% 
+ggplot() +
+    geom_point(aes(cdrp, log(quantity), color = file)) +
     scale_color_discrete(labels = NULL)
