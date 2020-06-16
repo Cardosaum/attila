@@ -128,7 +128,7 @@ Hence,
         raise EOFError('<output> variable must be a valid directory')
 
 
-    header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy', 'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', 'n_A', 'n_C', 'n_D', 'n_E', 'n_F', 'n_G', 'n_H', 'n_I', 'n_K', 'n_L', 'n_M', 'n_N', 'n_P', 'n_Q', 'n_R', 'n_S', 'n_T', 'n_V', 'n_W', 'n_Y', 'aliphatic', 'aromatic', 'neutral', 'positive', 'negative', 'invalid']
+    header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy', 'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', 'n_A', 'n_C', 'n_D', 'n_E', 'n_F', 'n_G', 'n_H', 'n_I', 'n_K', 'n_L', 'n_M', 'n_N', 'n_P', 'n_Q', 'n_R', 'n_S', 'n_T', 'n_V', 'n_W', 'n_Y', 'aliphatic', 'aromatic', 'neutral', 'positive', 'negative', 'invalid', 'file']
 
 
     aa_error = 0
@@ -166,6 +166,8 @@ Hence,
                 for k, v in groups.items():
                     attributes.append(str(v))
 
+                # in the final collumn we put the file name where the data come from
+                attributes.append(f'{output_file.name}')
                 out.writerow(attributes)
                 aa_total += 1
 
