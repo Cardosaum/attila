@@ -1,6 +1,6 @@
 ---
 title: "Análise exploratória de sequências CDR3" 
-subtitle: "Dados provenientes do projeto da Isaura"
+subtitle: "Primeira iteração"
 author: "Matheus Cardoso"
 date: "Jun 18, 2020"
 output: 
@@ -28,6 +28,11 @@ Nesse documento será feita uma análise explotarória dos dados advindos do sof
 # Métodos
 
 ## Processamento dos dados
+
+Para começar a análise, eu carrego os dados de um arquivo binário que foi previamente salvo.
+Esse arquivo `rds` foi gerado por um script em `R` que está no meu [fork](https://github.com/Cardosaum/attila/blob/master/programs/cdr/tmp.R) do `attila`.
+
+A baixo apresento um resumo do dataframe.
 
 ```{r load_data}
 library(tidyverse)
@@ -68,12 +73,99 @@ knitr::kable(exemplo_unico_cdr)
 ```
 
 Como é possível observar, nas duas primeras linhas temos uma mesma sequência, que apresenta um percentual de 100% predôminancia em seu respectivo arquivo de leiura.
+(coluna `cdrp` - cdr percentage, variando de 0 a 1).
 Porém, observamos também que a mesma sequência aparece nesse arquivo somente uma vez.
 Ou seja, esses dois primeiros arquivos contém só uma leitura, e, portanto, seu percentual de predominância será de 100%.
 Isso, por outro lado, não reflete enriquecimento de CDR3, e, portanto, nós precisamos remover esses casos.
 
 
+Pensando em como fazer a seleção dessas sequências enriquecidas, fiz algumas análises:
 
+```{r data_exploration_1}
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(quantity))
+  
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(quantity)) +
+  xlim(0, 300)
+
+cdr %>%
+        filter(type == "final") %>% 
+        mutate(level = case_when(
+                  quantity <= 300 ~ "quantity <= 300",
+                  TRUE ~ "quantity > 300")) %>%
+        group_by(level) %>% 
+        summarise("Number of CDR3 sequences" = n()) -> cdr_quantity_comparison_1
+
+knitr::kable(cdr_quantity_comparison_1)
+```
+
+
+```{r data_exploration_2}
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(cdrp))
+  
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(cdrp)) +
+  xlim(0.5, 1)
+
+cdr %>%
+        filter(type == "final") %>% 
+        mutate(level = case_when(
+                  cdrp <= 0.3 ~ "cdrp <= 0.3",
+                  TRUE ~ "cdrp > 0.3")) %>%
+        group_by(level) %>% 
+        summarise("Percentage" = n()) -> cdr_cdrp_comparison_1
+
+knitr::kable(cdr_cdrp_comparison_1, caption = "Percentage of prevalence of CDR3 sequence")
+
+
+cdr %>%
+        filter(type == "final") %>% 
+        mutate(level = case_when(
+                  cdrp < 0.5 ~ "cdrp < 0.5",
+                  TRUE ~ "cdrp > 0.5")) %>%
+        group_by(level) %>% 
+        summarise("Percentage" = n()) -> cdr_cdrp_comparison_2
+
+knitr::kable(cdr_cdrp_comparison_2, caption = "Percentage of prevalence of CDR3 sequence")
+```
+
+Como é possível notar, temos 23 sequências de CDR3 que apresentam prevalência maior que 30% em arquivos de leitura individual, e 22 se considerarmos 50% de prevalência.
+
+Para termos noção do que isso significa, vejamos o seguinte:
+
+```{r data_exploration_3}
+cdr$file %>% unique() %>% length() -> total_arquivos_leitura
+
+filter(cdr, type == "final")$file %>% unique() %>% length() -> total_arquivos_leitura_final_read
+
+tibble(
+  "Arquivo de leitura" = c("Todos (Inicial + Final)", "Apenas Final", "Final com CDR3 prevalência >= 50%"),
+  "Quantidade de Arquivos" = c(total_arquivos_leitura, total_arquivos_leitura_final_read, cdr_cdrp_comparison_2$Percentage[2])
+) %>% knitr::kable()
+```
+
+E, para mostrar todos os arquivos com prevalência maior que 50%:
+
+```{r data_exploration_4}
+cdr %>% 
+        filter(type == "final" & cdrp >= 0.5) %>% 
+        select(cdr3, cdrp, quantity, file) %>% 
+        knitr::kable()
+```
+
+
+Portanto, eu resolvi salvar esse dataframe como aquele contendo as sequências enriquecidas.
+
+```{r data_processing_2}
+cdr_rich <- cdr %>% filter(type == "final" & cdrp >= 0.5) 
+```
+
+**Todo o código feito a partir daqui é um rascunho**
+
+Peço perdão pela bagunça nos próximos blocos.
+Eu escrevi isso para me ajudar a entender os dados, sem a intenção de apresentar isso para ninguém.
 
 ## Análise Exploratória
 
