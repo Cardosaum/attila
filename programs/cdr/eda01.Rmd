@@ -18,6 +18,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+set.seed(42)
 ```
 
 # Introdução
@@ -49,9 +50,32 @@ knitr::kable(head(cdr))
 summary(cdr)
 ```
 
-## Análise Exploratória
 
 ### Isolando apenas as sequências CDR3 enriquecidas
+
+Como é possível perceber pelos dados acima mostrados, temos muitas reads no dataframe.
+Entretanto, nosso interesse por agora é nas sequências que foram enriquecidas após várias etapas de seleção.
+Para isso, nós precisaremos criar um subset do dataframe inicial, contendo apenas CDR3s que apresentam alto percentual de predominância em seu respectivo arquivo de leitura.
+
+Vou mostrar um exemplo do que quero dizer:
+
+```{r data_processing_1}
+cdr %>%
+      select(cdr3, type, cdrp, quantity, file) %>% 
+      head() -> exemplo_unico_cdr
+
+knitr::kable(exemplo_unico_cdr)
+```
+
+Como é possível observar, nas duas primeras linhas temos uma mesma sequência, que apresenta um percentual de 100% predôminancia em seu respectivo arquivo de leiura.
+Porém, observamos também que a mesma sequência aparece nesse arquivo somente uma vez.
+Ou seja, esses dois primeiros arquivos contém só uma leitura, e, portanto, seu percentual de predominância será de 100%.
+Isso, por outro lado, não reflete enriquecimento de CDR3, e, portanto, nós precisamos remover esses casos.
+
+
+
+
+## Análise Exploratória
 
 ```{r eda1}
 cdr %>%
@@ -65,15 +89,17 @@ cdr_final %>%
                 group_by(file) %>% 
                 slice_head(n = 1) -> cdr_enriched
 
-# library(GGally)
-# cdr_enriched %<>%
-#                 select(cdr3:SSF_Sheet, aromatic:file)
-# 
-# cdr_enriched %>%
-#                 ungroup() %>% 
-#                 select(-file) %>% 
-#                 ggpairs(aes(alpha = 0.4))
+library(GGally)
+cdr_enriched %<>%
+                select(cdr3:SSF_Sheet, aromatic:file)
+
+cdr_enriched %>%
+                ungroup() %>%
+                select(-file) %>%
+                ggpairs(aes(alpha = 0.4))
 ```
+
+
 
 ```{r eda2}
 cdr_final %>% 
@@ -108,10 +134,10 @@ ggplot(as_tibble(pca_a$x)) +
 pca_a$x
 str(pca_a)
 
-# pca_cdr_result <- cdr %>%
-#                         select(!c(cdr3, type, file, invalid)) %>% 
-#                         prcomp(center = T, scale. = T)
-# summary(pca_cdr_result)
+pca_cdr_result <- cdr %>%
+                        select(!c(cdr3, type, file, invalid)) %>%
+                        prcomp(center = T, scale. = T)
+summary(pca_cdr_result)
 ```
 
 ```{r eda3}
@@ -168,7 +194,58 @@ b %>% group_by(type) %>% summarise(total = n())
 b %>% group_by(type) %>% summarise(quantile = quantile(cdrp)) -> b_quantiles
 b_quantiles <- add_column(b_quantiles, quantiles = rep(attr(quantile(b$quantity), "names"), 2))
 knitr::kable(b_quantiles)
+
+ggplot(b) +
+  geom_density(aes(quantity))
+
+b %>% 
+      group_by(cdr3, type) %>% 
+      arrange(-cdrp)
+
+b %>% 
+      group_by(cdr3, type) %>% 
+      select(cdr3, type, cdrp, quantity) %>% 
+      arrange(-cdrp, -quantity) %>% 
+      slice_head(n = 1) %>% 
+      arrange(-cdrp, -quantity) 
+
+b %>% 
+      group_by(type, cdr3) %>% 
+      summarise(total = n()) %>% 
+      arrange(-total)
+b %>% 
+      group_by(cdr3, type) %>% 
+      select(cdr3, type, cdrp, quantity) %>% 
+      arrange(-cdrp, -quantity) -> c
+
+c %>% filter(type == "initial") %>% slice_head(n = 1)
+
+ggplot(c) +
+  geom_density(aes(cdrp, color = type), alpha = .4)
 ```
+
+```{r eda5}
+b %>%
+    group_by(cdr3, type) %>% 
+    summarise(
+      quantity = sum(quantity),
+      reads    = n()) %>% 
+    arrange(-quantity, -reads) -> d
+  
+d
+
+d %>% group_by(type) %>% summarise(n = n())
+
+ggplot(d) +
+  geom_density(aes(reads, color = type))
+
+ggplot(d) +
+  geom_boxplot(aes(type, log10(quantity), fill = type)) +
+  geom_jitter(aes(type, log10(quantity), fill = type))
+
+d
+```
+
 
 # Resultados
 
