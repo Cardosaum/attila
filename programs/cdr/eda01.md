@@ -1,6 +1,6 @@
 ---
 title: "Análise exploratória de sequências CDR3" 
-subtitle: "Dados provenientes do projeto da Isaura"
+subtitle: "Primeira iteração"
 author: "Matheus Cardoso"
 date: "Jun 18, 2020"
 output: 
@@ -25,6 +25,11 @@ Nesse documento será feita uma análise explotarória dos dados advindos do sof
 # Métodos
 
 ## Processamento dos dados
+
+Para começar a análise, eu carrego os dados de um arquivo binário que foi previamente salvo.
+Esse arquivo `rds` foi gerado por um script em `R` que está no meu [fork](https://github.com/Cardosaum/attila/blob/master/programs/cdr/tmp.R) do `attila`.
+
+A baixo apresento um resumo do dataframe.
 
 
 ```r
@@ -185,12 +190,181 @@ DGVAVAGLDY     final      0.7025474       6481  mariajac_anteriores_isaura_1_isa
 DGVAVAGLDY     final      0.7025474       6481  mariajac_anteriores_isaura_1_isaura_HR01eXHR41h_LR01aXLR41d_VH_FinalRound_VHR41h_S7_L001_R1_001aafreq.csv 
 
 Como é possível observar, nas duas primeras linhas temos uma mesma sequência, que apresenta um percentual de 100% predôminancia em seu respectivo arquivo de leiura.
+(coluna `cdrp` - cdr percentage, variando de 0 a 1).
 Porém, observamos também que a mesma sequência aparece nesse arquivo somente uma vez.
 Ou seja, esses dois primeiros arquivos contém só uma leitura, e, portanto, seu percentual de predominância será de 100%.
 Isso, por outro lado, não reflete enriquecimento de CDR3, e, portanto, nós precisamos remover esses casos.
 
 
+Pensando em como fazer a seleção dessas sequências enriquecidas, fiz algumas análises:
 
+
+```r
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(quantity))
+```
+
+![](eda01_files/figure-html/data_exploration_1-1.png)<!-- -->
+
+```r
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(quantity)) +
+  xlim(0, 300)
+```
+
+![](eda01_files/figure-html/data_exploration_1-2.png)<!-- -->
+
+```r
+cdr %>%
+        filter(type == "final") %>% 
+        mutate(level = case_when(
+                  quantity <= 300 ~ "quantity <= 300",
+                  TRUE ~ "quantity > 300")) %>%
+        group_by(level) %>% 
+        summarise("Number of CDR3 sequences" = n()) -> cdr_quantity_comparison_1
+
+knitr::kable(cdr_quantity_comparison_1)
+```
+
+
+
+level              Number of CDR3 sequences
+----------------  -------------------------
+quantity <= 300                       82055
+quantity > 300                          714
+
+
+
+```r
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(cdrp))
+```
+
+![](eda01_files/figure-html/data_exploration_2-1.png)<!-- -->
+
+```r
+ggplot(filter(cdr, type == "final")) +
+  geom_histogram(aes(cdrp)) +
+  xlim(0.5, 1)
+```
+
+![](eda01_files/figure-html/data_exploration_2-2.png)<!-- -->
+
+```r
+cdr %>%
+        filter(type == "final") %>% 
+        mutate(level = case_when(
+                  cdrp <= 0.3 ~ "cdrp <= 0.3",
+                  TRUE ~ "cdrp > 0.3")) %>%
+        group_by(level) %>% 
+        summarise("Percentage" = n()) -> cdr_cdrp_comparison_1
+
+knitr::kable(cdr_cdrp_comparison_1, caption = "Percentage of prevalence of CDR3 sequence")
+```
+
+
+
+Table: Percentage of prevalence of CDR3 sequence
+
+level          Percentage
+------------  -----------
+cdrp <= 0.3         82746
+cdrp > 0.3             23
+
+```r
+cdr %>%
+        filter(type == "final") %>% 
+        mutate(level = case_when(
+                  cdrp < 0.5 ~ "cdrp < 0.5",
+                  TRUE ~ "cdrp > 0.5")) %>%
+        group_by(level) %>% 
+        summarise("Percentage" = n()) -> cdr_cdrp_comparison_2
+
+knitr::kable(cdr_cdrp_comparison_2, caption = "Percentage of prevalence of CDR3 sequence")
+```
+
+
+
+Table: Percentage of prevalence of CDR3 sequence
+
+level         Percentage
+-----------  -----------
+cdrp < 0.5         82747
+cdrp > 0.5            22
+
+Como é possível notar, temos 23 sequências de CDR3 que apresentam prevalência maior que 30% em arquivos de leitura individual, e 22 se considerarmos 50% de prevalência.
+
+Para termos noção do que isso significa, vejamos o seguinte:
+
+
+```r
+cdr$file %>% unique() %>% length() -> total_arquivos_leitura
+
+filter(cdr, type == "final")$file %>% unique() %>% length() -> total_arquivos_leitura_final_read
+
+tibble(
+  "Arquivo de leitura" = c("Todos (Inicial + Final)", "Apenas Final", "Final com CDR3 prevalência >= 50%"),
+  "Quantidade de Arquivos" = c(total_arquivos_leitura, total_arquivos_leitura_final_read, cdr_cdrp_comparison_2$Percentage[2])
+) %>% knitr::kable()
+```
+
+
+
+Arquivo de leitura                   Quantidade de Arquivos
+----------------------------------  -----------------------
+Todos (Inicial + Final)                                  63
+Apenas Final                                             31
+Final com CDR3 prevalência >= 50%                        22
+
+E, para mostrar todos os arquivos com prevalência maior que 50%:
+
+
+```r
+cdr %>% 
+        filter(type == "final" & cdrp >= 0.5) %>% 
+        select(cdr3, cdrp, quantity, file) %>% 
+        knitr::kable()
+```
+
+
+
+cdr3               cdrp   quantity  file                                                                                                      
+-----------  ----------  ---------  ----------------------------------------------------------------------------------------------------------
+FLVEVK        0.9629992     714166  mariajac_Isaura_Pd2_140819_R0xR5_b_VH_FinalRound_R5b_VH_S10_L001_R1_001aafreq.csv                         
+FLVEVK        0.7156274     254505  mariajac_Isaura_Pd2_140819_R0xR4_b_VH_FinalRound_R4b_VH_S9_L001_R1_001aafreq.csv                          
+DGVAVAGLDY    0.7025474       6481  mariajac_anteriores_isaura_1_isaura_HR01eXHR41h_LR01aXLR41c_VH_FinalRound_VHR41h_S7_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.7025474       6481  mariajac_anteriores_isaura_1_isaura_HR01eXHR41h_LR01aXLR41d_VH_FinalRound_VHR41h_S7_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.7025474       6481  mariajac_anteriores_isaura_1_isaura_HR01eXHR41h_LR01bXLR41c_VH_FinalRound_VHR41h_S7_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.7025474       6481  mariajac_anteriores_isaura_1_isaura_HR01eXHR41h_LR01bXLR41d_VH_FinalRound_VHR41h_S7_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.6955451      11866  mariajac_anteriores_isaura_1_isaura_HR01eXHR41g_LR01aXLR41c_VH_FinalRound_VHR41g_S6_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.6955451      11866  mariajac_anteriores_isaura_1_isaura_HR01eXHR41g_LR01aXLR41d_VH_FinalRound_VHR41g_S6_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.6955451      11866  mariajac_anteriores_isaura_1_isaura_HR01eXHR41g_LR01bXLR41c_VH_FinalRound_VHR41g_S6_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.6955451      11866  mariajac_anteriores_isaura_1_isaura_HR01eXHR41g_LR01bXLR41d_VH_FinalRound_VHR41g_S6_L001_R1_001aafreq.csv 
+DGVAVAGLDY    0.6911960      14540  mariajac_isaura_2_2_isaura_H_0eX4g_L_0aX4c_VH_FinalRound_VHR42g_S13_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6911960      14540  mariajac_isaura_2_2_isaura_H_0eX4g_L_0aX4d_VH_FinalRound_VHR42g_S13_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6911960      14540  mariajac_isaura_2_2_isaura_H_0eX4g_L_0bX4c_2_VH_FinalRound_VHR42g_S13_L001_R1_001aafreq.csv               
+DGVAVAGLDY    0.6911960      14540  mariajac_isaura_2_2_isaura_H_0eX4g_L_0bX4c_VH_FinalRound_VHR42g_S13_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6911960      14540  mariajac_isaura_2_2_isaura_H_0eX4g_L_0bX4d_VH_FinalRound_VHR42g_S13_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6872554      11416  mariajac_isaura_2_2_isaura_H_0eX4h_L_0aX4c_2_VH_FinalRound_VHR42h_S14_L001_R1_001aafreq.csv               
+DGVAVAGLDY    0.6872554      11416  mariajac_isaura_2_2_isaura_H_0eX4h_L_0aX4c_VH_FinalRound_VHR42h_S14_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6872554      11416  mariajac_isaura_2_2_isaura_H_0eX4h_L_0aX4d_VH_FinalRound_VHR42h_S14_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6872554      11416  mariajac_isaura_2_2_isaura_H_0eX4h_L_0bX4c_VH_FinalRound_VHR42h_S14_L001_R1_001aafreq.csv                 
+DGVAVAGLDY    0.6872554      11416  mariajac_isaura_2_2_isaura_H_0eX4h_L_0bX4d_2_VH_FinalRound_VHR42h_S14_L001_R1_001aafreq.csv               
+DGVAVAGLDY    0.6872554      11416  mariajac_isaura_2_2_isaura_H_0eX4h_L_0bX4d_VH_FinalRound_VHR42h_S14_L001_R1_001aafreq.csv                 
+GSHNSWDS      0.5791670     369801  mariajac_Isaura_Pd2_140819_R0xR4_a_VH_FinalRound_R4a_VH_S8_L001_R1_001aafreq.csv                          
+
+
+Portanto, eu resolvi salvar esse dataframe como aquele contendo as sequências enriquecidas.
+
+
+```r
+cdr_rich <- cdr %>% filter(type == "final" & cdrp >= 0.5) 
+```
+
+**Todo o código feito a partir daqui é um rascunho**
+
+Peço perdão pela bagunça nos próximos blocos.
+Eu escrevi isso para me ajudar a entender os dados, sem a intenção de apresentar isso para ninguém.
 
 ## Análise Exploratória
 
