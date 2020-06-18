@@ -1,8 +1,8 @@
 ---
-title: "Final Project - Pratical Machine Learning" 
-subtitle: "Analising and modeling Human Active Recognition data"
+title: "Análise exploratória de sequências CDR3" 
+subtitle: "Dados provenientes do projeto da Isaura"
 author: "Matheus Cardoso"
-date: "May 28, 2020"
+date: "Jun 18, 2020"
 output: 
   html_document: 
     fig_caption: yes
