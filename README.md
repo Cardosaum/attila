@@ -26,9 +26,9 @@ Internet
 [R software](https://cran.r-project.org)
 
   - R packages:
-    - tidyverse: `install.packages("tidyverse")`
-    - ggplot2:   `install.packages("ggplot2")`
-    - scales:    `install.packages("scales")`
+    - [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html): `install.packages("tidyverse")`
+    - [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html):   `install.packages("ggplot2")`
+    - [scales](https://cran.r-project.org/web/packages/scales/index.html):    `install.packages("scales")`
 
 
 ## Installation
