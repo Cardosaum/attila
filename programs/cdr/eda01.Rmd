@@ -36,14 +36,17 @@ cdr <- read_rds("./data/binary/isaura_compressed.rds")
 cdr %<>% mutate(type = factor(case_when(
                         str_detect(file, "Final") ~ "final",
                         str_detect(file, "Initial") ~ "initial"))) %>% 
-        ungroup() %>% 
-        group_by(file) %>% 
-        mutate(cdrp = quantity/sum(quantity)) %>% 
-        select(cdr3, type, cdrp, everything()) %>% 
-        arrange(-cdrp, -quantity) %>% 
-        ungroup()
+         ungroup() %>% 
+         group_by(file) %>% 
+         mutate(cdrp = quantity/sum(quantity)) %>% 
+         select(cdr3, type, cdrp, everything()) %>% 
+         arrange(-cdrp, -quantity) %>% 
+         ungroup()
 
-head(cdr)
+dim(cdr)
+names(cdr)
+knitr::kable(head(cdr))
+summary(cdr)
 ```
 
 ## Análise Exploratória
@@ -62,14 +65,14 @@ cdr_final %>%
                 group_by(file) %>% 
                 slice_head(n = 1) -> cdr_enriched
 
-library(GGally)
-cdr_enriched %<>%
-                select(cdr3:SSF_Sheet, aromatic:file)
-
-cdr_enriched %>%
-                ungroup() %>% 
-                select(-file) %>% 
-                ggpairs(aes(alpha = 0.4))
+# library(GGally)
+# cdr_enriched %<>%
+#                 select(cdr3:SSF_Sheet, aromatic:file)
+# 
+# cdr_enriched %>%
+#                 ungroup() %>% 
+#                 select(-file) %>% 
+#                 ggpairs(aes(alpha = 0.4))
 ```
 
 ```{r eda2}
@@ -80,10 +83,91 @@ cdr_final %>%
 pca_result <- prcomp(cdr_final_pca, center = T, scale. = T)
 summary(pca_result)
 
-pca_cdr_result <- cdr %>%
-                        select(!c(cdr3, type, file, invalid)) %>% 
-                        prcomp(center = T, scale. = T)
-summary(pca_cdr_result)
+plot(pca_result$x[,1], pca_result$x[,2])
+cdr_final_pca
+
+cdr_final %>% 
+              group_by(file) %>% 
+              arrange(-cdrp) %>% 
+              slice_head(n = 1) %>% 
+              ungroup() %>% 
+              select(!c(cdr3, type, file, invalid)) %>% 
+              arrange(-cdrp) -> a
+
+# in this line we remove all collumns that have variance equal to 0
+# Doing this, we can apply a pca to the dataframe without erros
+# credit goes to: https://stackoverflow.com/a/40317343
+a <- select(a, !c(which(apply(a, 2, var)==0)))
+pca_a <- prcomp(a, center = T, scale. = T)
+summary(pca_a)
+plot(pca_a$x[,1], pca_a$x[,2])
+
+ggplot(as_tibble(pca_a$x)) +
+  geom_point(aes(PC1, PC2))
+
+pca_a$x
+str(pca_a)
+
+# pca_cdr_result <- cdr %>%
+#                         select(!c(cdr3, type, file, invalid)) %>% 
+#                         prcomp(center = T, scale. = T)
+# summary(pca_cdr_result)
+```
+
+```{r eda3}
+cdr_final %>% 
+              group_by(file) %>% 
+              arrange(-cdrp) %>% 
+              slice_head(n = 10) %>% 
+              ungroup() %>% 
+              select(!c(cdr3, type, file, invalid)) %>% 
+              arrange(-cdrp) -> b
+
+b <- select(b, !c(which(apply(b, 2, var)==0)))
+b
+pca_b <- prcomp(b, center = T, scale. = T)
+summary(pca_b)
+plot(pca_b$x[,1], pca_b$x[,2])
+
+ggplot(as_tibble(pca_b$x)) +
+  geom_point(aes(PC1, PC2))
+
+summary(pca_b)
+```
+
+```{r eda4}
+summary(cdr$quantity)
+cdr %>% 
+        filter(quantity >= 100) -> a
+a
+
+ggplot(a) +
+  geom_density(aes(quantity))
+
+ggplot(cdr) +
+  geom_bar(aes(quantity)) +
+  xlim(0, 30)
+
+ggplot(cdr) +
+  geom_histogram(aes(quantity)) +
+  xlim(0, 300)
+
+ggplot(cdr) +
+  geom_density(aes(quantity), fill = "lightblue") +
+  xlim(0, 300)
+
+quantile(cdr$quantity)
+
+dim(cdr)
+cdr %>% filter(quantity >= 1E3) %>% dim()
+cdr %>% filter(quantity >= 1E4) %>% dim()
+cdr %>% filter(quantity >= 1E5) %>% dim()
+
+cdr %>% filter(quantity >= 1E3) -> b
+b %>% group_by(type) %>% summarise(total = n())
+b %>% group_by(type) %>% summarise(quantile = quantile(cdrp)) -> b_quantiles
+b_quantiles <- add_column(b_quantiles, quantiles = rep(attr(quantile(b$quantity), "names"), 2))
+knitr::kable(b_quantiles)
 ```
 
 # Resultados
