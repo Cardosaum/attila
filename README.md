@@ -25,9 +25,10 @@ Internet
 
 [R software](https://cran.r-project.org)
 
-R package ggplot2: use R function `install.packages("ggplot2")`
-
-R package scales: use R function `install.packages("scales")`
+  - R packages:
+    - tidyverse: `install.packages("tidyverse")`
+    - ggplot2:   `install.packages("ggplot2")`
+    - scales:    `install.packages("scales")`
 
 
 ## Installation
