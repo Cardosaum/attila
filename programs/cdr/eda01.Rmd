@@ -1,0 +1,91 @@
+---
+title: "Final Project - Pratical Machine Learning" 
+subtitle: "Analising and modeling Human Active Recognition data"
+author: "Matheus Cardoso"
+date: "May 28, 2020"
+output: 
+  html_document: 
+    fig_caption: yes
+    highlight: zenburn
+    keep_md: yes
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introdução
+
+Nesse documento será feita uma análise explotarória dos dados advindos do software `attila`.
+
+# Métodos
+
+## Processamento dos dados
+
+```{r load_data}
+library(tidyverse)
+library(magrittr)
+
+cdr <- read_rds("./data/binary/isaura_compressed.rds")
+cdr %<>% mutate(type = factor(case_when(
+                        str_detect(file, "Final") ~ "final",
+                        str_detect(file, "Initial") ~ "initial"))) %>% 
+        ungroup() %>% 
+        group_by(file) %>% 
+        mutate(cdrp = quantity/sum(quantity)) %>% 
+        select(cdr3, type, cdrp, everything()) %>% 
+        arrange(-cdrp, -quantity) %>% 
+        ungroup()
+
+head(cdr)
+```
+
+## Análise Exploratória
+
+### Isolando apenas as sequências CDR3 enriquecidas
+
+```{r eda1}
+cdr %>%
+        ungroup() %>% 
+        arrange(-cdrp, type, file) %>% 
+        filter(quantity > 1) %>% 
+        filter(type == "final") -> cdr_final
+
+cdr_final %>% 
+                filter(quantity > 1) %>% 
+                group_by(file) %>% 
+                slice_head(n = 1) -> cdr_enriched
+
+library(GGally)
+cdr_enriched %<>%
+                select(cdr3:SSF_Sheet, aromatic:file)
+
+cdr_enriched %>%
+                ungroup() %>% 
+                select(-file) %>% 
+                ggpairs(aes(alpha = 0.4))
+```
+
+```{r eda2}
+cdr_final %>% 
+             ungroup() %>% 
+             select(!c(cdr3, type, file, invalid)) -> cdr_final_pca
+
+pca_result <- prcomp(cdr_final_pca, center = T, scale. = T)
+summary(pca_result)
+
+pca_cdr_result <- cdr %>%
+                        select(!c(cdr3, type, file, invalid)) %>% 
+                        prcomp(center = T, scale. = T)
+summary(pca_cdr_result)
+```
+
+# Resultados
+
+# Conclusão
