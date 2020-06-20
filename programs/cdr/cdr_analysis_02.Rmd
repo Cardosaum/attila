@@ -12,15 +12,18 @@ output:
     toc: yes
     toc_float: yes
     number_sections: yes
+    code_folding: hide
   pdf_document:
     toc: yes
 editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=TRUE, echo=FALSE}
+```{r setup, include=TRUE, echo=TRUE}
 knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
-set.seed(42)
+
+# this R script does all the setup for us
+source("./load_files.R")
 ```
 
 # Introdução
@@ -29,18 +32,19 @@ Essa análise será baseada na primeira iteração, porém mudando os dados anal
 Dessa vez, usarei os seguintes dados:
 
 ```{r list_files}
-library(tidyverse, quietly = TRUE)
-library(magrittr, quietly = TRUE)
 
-data_path            <- "./data"
-data_path_raw        <- file.path(data_path, "raw")
-data_path_csv        <- file.path(data_path, "parsed")
 data_files_selected  <- readLines(file("cdr_analysis_02_selected_files.txt"))
 
 
 data_files_and_size <- sapply(data_files_selected, file.size)
-files_to_include_in_dataframe <- tibble("Files" = names(data_files_and_size), "Size (in MB)" = (data_files_and_size/1E6))
-knitr::kable(files_to_include_in_dataframe, caption = "List of files to be analysed")
+
+files_to_include_in_dataframe <- tibble(
+                                    "Files" = names(data_files_and_size),
+                                    "Size (in MB)" = (data_files_and_size/1E6))
+
+kable(
+     files_to_include_in_dataframe,
+     caption = "List of files to be analysed")
 ```
 
 # métodos
@@ -48,8 +52,6 @@ knitr::kable(files_to_include_in_dataframe, caption = "List of files to be analy
 ## Processamento dos dados
 
 ```{r load_data}
-source("load_files.R")
-
 cdr_df <- load_cdr(names(data_files_and_size))
 
 cdr_df %<>% 
@@ -116,6 +118,7 @@ cdr_df %>%
               geom_density(aes(cdrp, color = experiment, fill = experiment), alpha = 0.2) +
               xlim(0.01, 0.3) +
               scale_color_d3() + scale_fill_d3()
+
 
 
 # analysing fold change
