@@ -1,7 +1,0 @@
-/home/brigido/rafael/Nestor/resultado/nestor/VH/FinalRound/rafaCD20_Vh_R4_R1aafreq.txt
-/home/brigido/rafael/Nestor/resultado/nestor/VH/InitialRound/rafaCD20_Vh_R0_R1aafreq.txt
-/home/brigido/renato/zika_ago18/phage_zika/VH/FinalRound/R4pep_VH_R1aafreq.txt
-/home/brigido/renato/zika_ago18/phage_zika/VH/InitialRound/R0_VH_R1aafreq.txt
-/home/brigido/renato/zika_ago18_ac/phage_zika_acid/VH/FinalRound/R4ac_VH_R1aafreq.txt
-/home/brigido/renato/zika_ago18_ac/phage_zika_acid/VH/InitialRound/R0_VH_R1aafreq.txt
-
