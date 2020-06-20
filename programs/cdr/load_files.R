@@ -27,9 +27,9 @@ files_parsed     <- dir(data_path_parsed)
 files_binary     <- dir(data_path_binary)
 ##############################
 
-library(tidyverse)
-library(magrittr)
-library(knitr)
+library(tidyverse, quietly = TRUE)
+library(magrittr, quietly = TRUE)
+library(knitr, quietly = TRUE)
 set.seed(42)
 
 load_and_merge_cdr_data <- function(file_names){
