@@ -19,11 +19,8 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=TRUE, echo=TRUE}
+```{r setup, include=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
-
-# this R script does all the setup for us
-source("./load_files.R")
 ```
 
 # Introdução
@@ -32,6 +29,8 @@ Essa análise será baseada na primeira iteração, porém mudando os dados anal
 Dessa vez, usarei os seguintes dados:
 
 ```{r list_files}
+# this R script does all the setup for us
+source("./load_files.R")
 
 data_files_selected  <- readLines(file("cdr_analysis_02_selected_files.txt"))
 
@@ -71,8 +70,8 @@ cdr_df %<>%
                                   TRUE ~ "renato_peptide")) %>% 
           select(cdr3, cycle, expgroup, experiment, everything())
 
-names(cdr_df)
 dim(cdr_df)
+names(cdr_df)
 ```
 
 ```{r data_exploration_1}
@@ -107,18 +106,49 @@ ggplot(cdr_df_summary_per_experiment) +
 ```
 
 ```{r data_exploration_2}
-library(ggsci)
 
 # search for enriched CDR3s
 
 # analysing cdrp
+
 cdr_df %>% 
             group_by(experiment) %>% 
             ggplot() +
               geom_density(aes(cdrp, color = experiment, fill = experiment), alpha = 0.2) +
-              xlim(0.01, 0.3) +
-              scale_color_d3() + scale_fill_d3()
+              labs(
+                title = "CDR3 percentage of prevalence distribuition"
+              ) +
+              xlim(0.01, 0.33)
 
+cdr_df %>% 
+            group_by(experiment) -> df_cdr_exp
+
+cdr_exp_qnt_p1 <- 
+            ggplot(df_cdr_exp) +
+              geom_density(
+                aes(
+                  x = quantity,
+                  color = experiment,
+                  fill = experiment),
+                alpha = 0.2) +
+                # stat = "bin") +
+              labs(
+                title = "CDR3 percentage of prevalence distribuition"
+              )
+
+df_cdr_exp %>% summarise(quantiles = quantile(quantity))
+df_cdr_exp %>% 
+              filter(experiment == "renato_pep_R4") %>% 
+              mutate(ham = if_else(quantity > 20, 1, 0)) %>% 
+              select(cdr3, quantity, ham) %>% 
+              mutate(per = (sum(ham)/length(ham)) * 100) %>% 
+              group_by(ham) %>% sample_n(3)
+
+cdr_exp_qnt_p1 + facet_zoom(xlim = c(0, 50))
+
+cdr_df %>%
+          group_by(experiment) %>% 
+          select(cdr3:quantity)
 
 
 # analysing fold change

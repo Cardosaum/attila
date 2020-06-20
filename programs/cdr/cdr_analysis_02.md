@@ -12,6 +12,7 @@ output:
     toc: yes
     toc_float: yes
     number_sections: yes
+    code_folding: hide
   pdf_document:
     toc: yes
 editor_options:
@@ -19,6 +20,9 @@ editor_options:
 ---
 
 
+```r
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
 
 # Introdução
 
@@ -27,18 +31,21 @@ Dessa vez, usarei os seguintes dados:
 
 
 ```r
-library(tidyverse, quietly = TRUE)
-library(magrittr, quietly = TRUE)
+# this R script does all the setup for us
+source("./load_files.R")
 
-data_path            <- "./data"
-data_path_raw        <- file.path(data_path, "raw")
-data_path_csv        <- file.path(data_path, "parsed")
 data_files_selected  <- readLines(file("cdr_analysis_02_selected_files.txt"))
 
 
 data_files_and_size <- sapply(data_files_selected, file.size)
-files_to_include_in_dataframe <- tibble("Files" = names(data_files_and_size), "Size (in MB)" = (data_files_and_size/1E6))
-knitr::kable(files_to_include_in_dataframe, caption = "List of files to be analysed")
+
+files_to_include_in_dataframe <- tibble(
+                                    "Files" = names(data_files_and_size),
+                                    "Size (in MB)" = (data_files_and_size/1E6))
+
+kable(
+     files_to_include_in_dataframe,
+     caption = "List of files to be analysed")
 ```
 
 
@@ -60,21 +67,8 @@ data/parsed/brigido_renato_zika_ago18_phage_zika_VH_InitialRound_R0_VH_R1aafreq.
 
 
 ```r
-source("load_files.R")
-
 cdr_df <- load_cdr(names(data_files_and_size))
-```
 
-```
-## [1] "data/parsed/brigido_rafael_Nestor_resultado_nestor_VH_FinalRound_rafaCD20_Vh_R4_R1aafreq.csv"
-## [1] "data/parsed/brigido_rafael_Nestor_resultado_nestor_VH_InitialRound_rafaCD20_Vh_R0_R1aafreq.csv"
-## [1] "data/parsed/brigido_renato_zika_ago18_ac_phage_zika_acid_VH_FinalRound_R4ac_VH_R1aafreq.csv"
-## [1] "data/parsed/brigido_renato_zika_ago18_ac_phage_zika_acid_VH_InitialRound_R0_VH_R1aafreq.csv"
-## [1] "data/parsed/brigido_renato_zika_ago18_phage_zika_VH_FinalRound_R4pep_VH_R1aafreq.csv"
-## [1] "data/parsed/brigido_renato_zika_ago18_phage_zika_VH_InitialRound_R0_VH_R1aafreq.csv"
-```
-
-```r
 cdr_df %<>% 
           mutate(experiment = case_when(
                                   str_detect(file, "rafael.*R4") ~ "rafael_R4",
@@ -92,6 +86,14 @@ cdr_df %<>%
                                   TRUE ~ "renato_peptide")) %>% 
           select(cdr3, cycle, expgroup, experiment, everything())
 
+dim(cdr_df)
+```
+
+```
+## [1] 75459    42
+```
+
+```r
 names(cdr_df)
 ```
 
@@ -105,14 +107,6 @@ names(cdr_df)
 ## [31] "n_S"        "n_T"        "n_V"        "n_W"        "n_Y"       
 ## [36] "aliphatic"  "aromatic"   "neutral"    "positive"   "negative"  
 ## [41] "invalid"    "file"
-```
-
-```r
-dim(cdr_df)
-```
-
-```
-## [1] 75459    42
 ```
 
 
@@ -154,20 +148,42 @@ ggplot(cdr_df_summary_per_experiment) +
 
 
 ```r
-library(ggsci)
-
 # search for enriched CDR3s
 
 # analysing cdrp
+
 cdr_df %>% 
             group_by(experiment) %>% 
             ggplot() +
               geom_density(aes(cdrp, color = experiment, fill = experiment), alpha = 0.2) +
-              xlim(0.01, 0.3) +
-              scale_color_d3() + scale_fill_d3()
+              xlim(0.01, 0.3)
 ```
 
 ![](cdr_analysis_02_files/figure-html/data_exploration_2-1.png)<!-- -->
+
+```r
+cdr_df %>%
+          group_by(experiment) %>% 
+          select(cdr3:quantity)
+```
+
+```
+## # A tibble: 75,459 x 6
+## # Groups:   experiment [6]
+##    cdr3             cycle expgroup       experiment      cdrp quantity
+##    <chr>            <chr> <chr>          <chr>          <dbl>    <int>
+##  1 GRWGSY           R4    renato_peptide renato_pep_R4 0.292     21192
+##  2 DGVAVAGLDY       R4    renato_peptide renato_pep_R4 0.252     18304
+##  3 GRWGSY           R4    renato_acid    renato_ac_R4  0.196      3094
+##  4 DGVAVAGLDY       R4    renato_acid    renato_ac_R4  0.129      2036
+##  5 FIVESK           R0    rafael_CD20    rafael_R0     0.118      5294
+##  6 FIVESK           R0    renato_acid    renato_ac_R0  0.104      6655
+##  7 FIVESK           R0    renato_peptide renato_pep_R0 0.104      6655
+##  8 AHIAAEYNWFDP     R4    renato_acid    renato_ac_R4  0.0938     1479
+##  9 DYGGPRGERYYYGMDV R4    renato_peptide renato_pep_R4 0.0554     4026
+## 10 FIVESK           R4    rafael_CD20    rafael_R4     0.0549     3036
+## # … with 75,449 more rows
+```
 
 ```r
 # analysing fold change
