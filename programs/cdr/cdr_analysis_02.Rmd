@@ -105,6 +105,20 @@ ggplot(cdr_df_summary_per_experiment) +
 ```
 
 ```{r data_exploration_2}
+library(ggsci)
+
+# search for enriched CDR3s
+
+# analysing cdrp
+cdr_df %>% 
+            group_by(experiment) %>% 
+            ggplot() +
+              geom_density(aes(cdrp, color = experiment, fill = experiment), alpha = 0.2) +
+              xlim(0.01, 0.3) +
+              scale_color_d3() + scale_fill_d3()
+
+
+# analysing fold change
 ```
 
 <!-- ### Isolando apenas as sequências CDR3 enriquecidas -->
