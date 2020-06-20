@@ -29,7 +29,16 @@ files_binary     <- dir(data_path_binary)
 
 library(tidyverse, quietly = TRUE)
 library(magrittr, quietly = TRUE)
+library(ggforce, quietly = TRUE)
 library(knitr, quietly = TRUE)
+library(ggsci, quietly = TRUE)
+
+# set custom theme for all plots
+# credit: https://stackoverflow.com/a/16437625/10719703
+ggplot <- function(...) ggplot2::ggplot(...) +
+  scale_color_d3() +
+  scale_fill_d3()
+
 set.seed(42)
 
 load_and_merge_cdr_data <- function(file_names){
