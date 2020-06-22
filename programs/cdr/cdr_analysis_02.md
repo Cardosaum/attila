@@ -68,7 +68,10 @@ data/parsed/brigido_renato_zika_ago18_phage_zika_VH_InitialRound_R0_VH_R1aafreq.
 
 ```r
 cdr_df <- load_cdr(names(data_files_and_size))
+```
 
+
+```r
 cdr_df %<>% 
           mutate(experiment = case_when(
                                   str_detect(file, "rafael.*R4") ~ "rafael_R4",
@@ -81,33 +84,76 @@ cdr_df %<>%
                                   str_detect(file, "R4") ~ "R4",
                                   str_detect(file, "R0") ~ "R0"),
                 expgroup = case_when(
-                                  str_detect(file, "rafael") ~ "rafael_CD20",
+                                  str_detect(file, "rafael") ~ "rafael",
                                   str_detect(file, "renato.*acid") ~ "renato_acid",
                                   TRUE ~ "renato_peptide")) %>% 
           select(cdr3, cycle, expgroup, experiment, everything())
 
-dim(cdr_df)
+cdr_df %<>% 
+          # select(cdr3:quantity) %>% 
+          # filter(quantity > 400) %>% 
+          group_by(cdr3, expgroup) %>% 
+          # filter(n()>1) %>% 
+          arrange(cycle, .by_group = TRUE) %>% 
+          mutate(
+            fcp = cdrp / lag(cdrp, default = first(cdrp)),
+            fcq = quantity / lag(quantity, default = first(quantity))) %>% 
+          select(cdr3:quantity, fcp, fcq, everything())
+
+glimpse(cdr_df)
 ```
 
 ```
-## [1] 75459    42
+## Rows: 75,459
+## Columns: 44
+## Groups: cdr3, expgroup [74,244]
+## $ cdr3       <chr> "A", "A", "A", "A", "A", "AAAAAGGGNWFDP", "AAAAAGGGNWFDP",…
+## $ cycle      <chr> "R0", "R0", "R4", "R0", "R4", "R0", "R0", "R0", "R0", "R0"…
+## $ expgroup   <chr> "rafael", "renato_acid", "renato_acid", "renato_peptide", …
+## $ experiment <chr> "rafael_R0", "renato_ac_R0", "renato_ac_R4", "renato_pep_R…
+## $ cdrp       <dbl> 4.450477e-05, 9.368705e-05, 1.267748e-04, 9.368705e-05, 4.…
+## $ quantity   <int> 2, 6, 2, 6, 3, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 3, 3, 5, 5, 1…
+## $ fcp        <dbl> 1.0000000, 1.0000000, 1.3531736, 1.0000000, 0.4409217, 1.0…
+## $ fcq        <dbl> 1.0000000, 1.0000000, 0.3333333, 1.0000000, 0.5000000, 1.0…
+## $ length     <int> 1, 1, 1, 1, 1, 13, 13, 9, 9, 9, 9, 8, 8, 9, 9, 9, 9, 8, 8,…
+## $ MW         <dbl> 89.0932, 89.0932, 89.0932, 89.0932, 89.0932, 1204.2476, 12…
+## $ AV         <dbl> 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1538, 0.1538, 0.…
+## $ IP         <dbl> 5.5700, 5.5700, 5.5700, 5.5700, 5.5700, 4.0500, 4.0500, 5.…
+## $ flex       <dbl> 0.7040, 0.7040, 0.7040, 0.7040, 0.7040, 0.7498, 0.7498, 0.…
+## $ gravy      <dbl> 1.8000, 1.8000, 1.8000, 1.8000, 1.8000, 0.0846, 0.0846, 0.…
+## $ SSF_Helix  <dbl> 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1538, 0.1538, 0.…
+## $ SSF_Turn   <dbl> 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.3846, 0.3846, 0.…
+## $ SSF_Sheet  <dbl> 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 0.3846, 0.3846, 0.…
+## $ n_A        <int> 1, 1, 1, 1, 1, 5, 5, 4, 4, 4, 4, 4, 4, 5, 5, 4, 4, 3, 3, 3…
+## $ n_C        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_D        <int> 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3…
+## $ n_E        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_F        <int> 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0…
+## $ n_G        <int> 0, 0, 0, 0, 0, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1…
+## $ n_H        <int> 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_I        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_K        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_L        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_M        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_N        <int> 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_P        <int> 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1…
+## $ n_Q        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_R        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_S        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2…
+## $ n_T        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ n_V        <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0…
+## $ n_W        <int> 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0…
+## $ n_Y        <int> 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 2…
+## $ aliphatic  <int> 1, 1, 1, 1, 1, 9, 9, 5, 5, 5, 5, 4, 4, 6, 6, 4, 4, 3, 3, 5…
+## $ aromatic   <int> 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 2…
+## $ neutral    <int> 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 2…
+## $ positive   <int> 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ negative   <int> 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3…
+## $ invalid    <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ file       <chr> "brigido_rafael_Nestor_resultado_nestor_VH_InitialRound_ra…
 ```
 
-```r
-names(cdr_df)
-```
-
-```
-##  [1] "cdr3"       "cycle"      "expgroup"   "experiment" "cdrp"      
-##  [6] "quantity"   "length"     "MW"         "AV"         "IP"        
-## [11] "flex"       "gravy"      "SSF_Helix"  "SSF_Turn"   "SSF_Sheet" 
-## [16] "n_A"        "n_C"        "n_D"        "n_E"        "n_F"       
-## [21] "n_G"        "n_H"        "n_I"        "n_K"        "n_L"       
-## [26] "n_M"        "n_N"        "n_P"        "n_Q"        "n_R"       
-## [31] "n_S"        "n_T"        "n_V"        "n_W"        "n_Y"       
-## [36] "aliphatic"  "aromatic"   "neutral"    "positive"   "negative"  
-## [41] "invalid"    "file"
-```
+## Análise exploratória
 
 
 ```r
@@ -148,18 +194,239 @@ ggplot(cdr_df_summary_per_experiment) +
 
 
 ```r
-# search for enriched CDR3s
-
-# analysing cdrp
-
 cdr_df %>% 
             group_by(experiment) %>% 
             ggplot() +
               geom_density(aes(cdrp, color = experiment, fill = experiment), alpha = 0.2) +
-              xlim(0.01, 0.3)
+              labs(
+                title = "Density plot of CDR3 Percentage of Prevalence",
+                x = "CDR3 Percentage of Prevalence (CDRP)"
+              ) +
+              xlim(0.01, 0.33) +
+              facet_grid(expgroup ~ .)
 ```
 
 ![](cdr_analysis_02_files/figure-html/data_exploration_2-1.png)<!-- -->
+
+```r
+cdr_df %>% 
+            group_by(experiment) %>% 
+            ggplot() +
+              geom_density(
+                aes(
+                  x = quantity,
+                  color = experiment,
+                  fill = experiment),
+                alpha = 0.2) +
+              labs(
+                title = "Density plot of Quantity Distribuition",
+                x = "Quantity"
+              ) + 
+            facet_zoom(xlim = c(0, 50))
+```
+
+![](cdr_analysis_02_files/figure-html/data_exploration_2-2.png)<!-- -->
+
+
+```r
+ggplot(cdr_df) +
+  geom_point(aes(cdrp, quantity, color = cycle)) +
+  facet_grid(expgroup ~ .) +
+  labs(
+    title = "Correlation between CDR3 percentage of prevalence and Quantity",
+    caption = "Note the interesting different trend between R0 and R4 in \"Renato Acid\" experiment.",
+    x = "CDR3 Percentage of Prevalence (CDRP)",
+    y = "Quantity"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/data_exploration_3-1.png)<!-- -->
+
+```r
+ggplot(cdr_df) +
+  geom_point(aes(fcp, fcq, color = expgroup)) +
+  facet_grid(expgroup ~ .) + 
+  labs(
+    title = "Correlation between Fold-Changes",
+    subtitle = "With outlier",
+    caption = "Note how different the correlation is between experiment groups.",
+    x = "Fold-Change by Percentage",
+    y = "Fold-Change by Quantity"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/data_exploration_3-2.png)<!-- -->
+
+```r
+ggplot(filter(cdr_df, fcp < 2E3)) +
+  geom_point(aes(fcp, fcq, color = expgroup)) +
+  facet_grid(expgroup ~ .) + 
+  labs(
+    title = "Correlation between Fold-Changes",
+    subtitle = "Without outlier",
+    caption = "Note how different the correlation is between experiment groups.",
+    x = "Fold-Change by Percentage",
+    y = "Fold-Change by Quantity"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/data_exploration_3-3.png)<!-- -->
+
+```r
+# filtering the outlier.
+cdr_df %>% filter(fcp > 1000) %>% select(cdr3:fcq)
+```
+
+```
+## # A tibble: 1 x 8
+## # Groups:   cdr3, expgroup [1]
+##   cdr3         cycle expgroup    experiment     cdrp quantity   fcp   fcq
+##   <chr>        <chr> <chr>       <chr>         <dbl>    <int> <dbl> <dbl>
+## 1 AHIAAEYNWFDP R4    renato_acid renato_ac_R4 0.0938     1479 3002.  740.
+```
+
+```r
+cdr_df %>% filter(cdr3 == "AHIAAEYNWFDP") %>% select(cdr3:fcq)
+```
+
+```
+## # A tibble: 4 x 8
+## # Groups:   cdr3, expgroup [2]
+##   cdr3         cycle expgroup       experiment         cdrp quantity   fcp   fcq
+##   <chr>        <chr> <chr>          <chr>             <dbl>    <int> <dbl> <dbl>
+## 1 AHIAAEYNWFDP R0    renato_acid    renato_ac_R0  0.0000312        2    1     1 
+## 2 AHIAAEYNWFDP R4    renato_acid    renato_ac_R4  0.0938        1479 3002.  740.
+## 3 AHIAAEYNWFDP R0    renato_peptide renato_pep_R0 0.0000312        2    1     1 
+## 4 AHIAAEYNWFDP R4    renato_peptide renato_pep_R4 0.00390        283  125.  142.
+```
+
+
+```r
+# search for enriched CDR3s
+for (i in c("fcp", "fcq")){
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(i)) %>% 
+          slice_head(n = 10) %>% 
+          select(cdr3:fcq) -> tmp_plot_1
+    
+    
+          print(ggplot(tmp_plot_1) +
+            geom_density(aes(quantity)))
+
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(i)) %>% 
+          slice_head(n = 10) -> tmp_plot_2
+
+          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+}
+```
+
+![](cdr_analysis_02_files/figure-html/data_processing_2-1.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-2.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-3.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-4.png)<!-- -->
+
+##  Draft section
+
+
+```r
+cdr_df %>% 
+          filter(cycle == "R4", fcp == 1, fcq == 1) %>%
+          select(cdr3, cdrp, fcp, quantity, fcq) %>%
+          ggplot() +
+            geom_density(aes(quantity)) +
+            facet_grid(expgroup ~ .)
+```
+
+![](cdr_analysis_02_files/figure-html/drafts-1.png)<!-- -->
+
+```r
+cdr_df %>% group_by(experiment) -> df_cdr_exp
+
+df_cdr_exp %>% summarise(quantiles = quantile(quantity))
+```
+
+```
+## # A tibble: 30 x 2
+## # Groups:   experiment [6]
+##    experiment quantiles
+##    <chr>          <dbl>
+##  1 rafael_R0          1
+##  2 rafael_R0          1
+##  3 rafael_R0          1
+##  4 rafael_R0          2
+##  5 rafael_R0       5294
+##  6 rafael_R4          1
+##  7 rafael_R4          1
+##  8 rafael_R4          1
+##  9 rafael_R4          2
+## 10 rafael_R4       3036
+## # … with 20 more rows
+```
+
+```r
+df_cdr_exp %>% 
+              filter(experiment == "renato_pep_R4") %>% 
+              mutate(ham = if_else(quantity > 20, 1, 0)) %>% 
+              select(cdr3, quantity, ham) %>% 
+              mutate(per = (sum(ham)/length(ham)) * 100) %>% 
+              group_by(ham) %>% sample_n(3)
+```
+
+```
+## # A tibble: 6 x 5
+## # Groups:   ham [2]
+##   experiment    cdr3             quantity   ham   per
+##   <chr>         <chr>               <int> <dbl> <dbl>
+## 1 renato_pep_R4 RRDNSGNTPFDD            1     0  2.60
+## 2 renato_pep_R4 DYGGPRGARYYYGMDV        5     0  2.60
+## 3 renato_pep_R4 GRWRSF                  2     0  2.60
+## 4 renato_pep_R4 PLAGLHY                22     1  2.60
+## 5 renato_pep_R4 EMWGPEY                65     1  2.60
+## 6 renato_pep_R4 GRGYSGYDRPFDY         327     1  2.60
+```
+
+```r
+cdr_df %>% 
+          group_by(expgroup, cdr3, cycle) %>% 
+          filter(cdr3 == "FIVESK") %>% 
+          select(cdr3:quantity) %>% 
+          arrange(expgroup)
+```
+
+```
+## # A tibble: 6 x 6
+## # Groups:   expgroup, cdr3, cycle [6]
+##   cdr3   cycle expgroup       experiment       cdrp quantity
+##   <chr>  <chr> <chr>          <chr>           <dbl>    <int>
+## 1 FIVESK R0    rafael         rafael_R0     0.118       5294
+## 2 FIVESK R4    rafael         rafael_R4     0.0549      3036
+## 3 FIVESK R0    renato_acid    renato_ac_R0  0.104       6655
+## 4 FIVESK R4    renato_acid    renato_ac_R4  0.0126       199
+## 5 FIVESK R0    renato_peptide renato_pep_R0 0.104       6655
+## 6 FIVESK R4    renato_peptide renato_pep_R4 0.00617      448
+```
+
+```r
+cdr_df %>% 
+          group_by(expgroup, cycle) %>% 
+          select(cdr3:quantity) %>% 
+          sample_n(1)
+```
+
+```
+## # A tibble: 6 x 6
+## # Groups:   expgroup, cycle [6]
+##   cdr3             cycle expgroup       experiment         cdrp quantity
+##   <chr>            <chr> <chr>          <chr>             <dbl>    <int>
+## 1 EYSGDPRRIDY      R0    rafael         rafael_R0     0.0000223        1
+## 2 RISMMGSQH        R4    rafael         rafael_R4     0.0000181        1
+## 3 DQGYYYDSSDY      R0    renato_acid    renato_ac_R0  0.0000156        1
+## 4 GGSSSPGLVGFHSMDV R4    renato_acid    renato_ac_R4  0.000254         4
+## 5 DRGMTTVTTVDY     R0    renato_peptide renato_pep_R0 0.0000468        3
+## 6 GGWGSS           R4    renato_peptide renato_pep_R4 0.0000275        2
+```
 
 ```r
 cdr_df %>%
@@ -170,25 +437,105 @@ cdr_df %>%
 ```
 ## # A tibble: 75,459 x 6
 ## # Groups:   experiment [6]
-##    cdr3             cycle expgroup       experiment      cdrp quantity
-##    <chr>            <chr> <chr>          <chr>          <dbl>    <int>
-##  1 GRWGSY           R4    renato_peptide renato_pep_R4 0.292     21192
-##  2 DGVAVAGLDY       R4    renato_peptide renato_pep_R4 0.252     18304
-##  3 GRWGSY           R4    renato_acid    renato_ac_R4  0.196      3094
-##  4 DGVAVAGLDY       R4    renato_acid    renato_ac_R4  0.129      2036
-##  5 FIVESK           R0    rafael_CD20    rafael_R0     0.118      5294
-##  6 FIVESK           R0    renato_acid    renato_ac_R0  0.104      6655
-##  7 FIVESK           R0    renato_peptide renato_pep_R0 0.104      6655
-##  8 AHIAAEYNWFDP     R4    renato_acid    renato_ac_R4  0.0938     1479
-##  9 DYGGPRGERYYYGMDV R4    renato_peptide renato_pep_R4 0.0554     4026
-## 10 FIVESK           R4    rafael_CD20    rafael_R4     0.0549     3036
+##    cdr3          cycle expgroup       experiment         cdrp quantity
+##    <chr>         <chr> <chr>          <chr>             <dbl>    <int>
+##  1 A             R0    rafael         rafael_R0     0.0000445        2
+##  2 A             R0    renato_acid    renato_ac_R0  0.0000937        6
+##  3 A             R4    renato_acid    renato_ac_R4  0.000127         2
+##  4 A             R0    renato_peptide renato_pep_R0 0.0000937        6
+##  5 A             R4    renato_peptide renato_pep_R4 0.0000413        3
+##  6 AAAAAGGGNWFDP R0    renato_acid    renato_ac_R0  0.0000156        1
+##  7 AAAAAGGGNWFDP R0    renato_peptide renato_pep_R0 0.0000156        1
+##  8 AAAAGHFDY     R0    renato_acid    renato_ac_R0  0.0000312        2
+##  9 AAAAGHFDY     R0    renato_peptide renato_pep_R0 0.0000312        2
+## 10 AAAAGQFDY     R0    renato_acid    renato_ac_R0  0.0000156        1
 ## # … with 75,449 more rows
 ```
 
 ```r
-# analysing fold change
+# analysing cdrp
+
+cdr_df %>% 
+          select(cdr3:quantity) %>% 
+          # filter(quantity > 400) %>% 
+          group_by(cdr3, expgroup) %>% 
+          # filter(n()>1) %>% 
+          arrange(cycle, .by_group = TRUE) %>% 
+          mutate(
+            fcp = cdrp / lag(cdrp, default = first(cdrp)),
+            fcq = quantity / lag(quantity, default = first(quantity))) %>% 
+          select(cdr3:quantity, fcp, fcq, everything()) -> b
+
+b %>% 
+      group_by(cdr3, expgroup) %>% 
+      filter(n()>1) %>% 
+      group_by(cycle, .add=T) %>% 
+      summarise(n = n(), s = sum(fcp), q = sum(quantity), c = sum(cdrp)) %>% print()
 ```
 
+```
+## # A tibble: 2,430 x 7
+## # Groups:   cdr3, expgroup [1,215]
+##    cdr3       expgroup       cycle     n     s     q         c
+##    <chr>      <chr>          <chr> <int> <dbl> <int>     <dbl>
+##  1 A          renato_acid    R0        1 1         6 0.0000937
+##  2 A          renato_acid    R4        1 1.35      2 0.000127 
+##  3 A          renato_peptide R0        1 1         6 0.0000937
+##  4 A          renato_peptide R4        1 0.441     3 0.0000413
+##  5 AAGGRPFDY  renato_peptide R0        1 1         1 0.0000156
+##  6 AAGGRPFDY  renato_peptide R4        1 0.882     1 0.0000138
+##  7 AARQPDY    renato_acid    R0        1 1         5 0.0000781
+##  8 AARQPDY    renato_acid    R4        1 0.812     1 0.0000634
+##  9 ADGYNNEVDY renato_acid    R0        1 1        13 0.000203 
+## 10 ADGYNNEVDY renato_acid    R4        1 0.312     1 0.0000634
+## # … with 2,420 more rows
+```
+
+```r
+b %>% filter(fcp > 200) %>% arrange(-fcp)
+```
+
+```
+## # A tibble: 18 x 8
+## # Groups:   cdr3, expgroup [18]
+##    cdr3            cycle expgroup      experiment      cdrp quantity   fcp   fcq
+##    <chr>           <chr> <chr>         <chr>          <dbl>    <int> <dbl> <dbl>
+##  1 AHIAAEYNWFDP    R4    renato_acid   renato_ac_R4 0.0938      1479 3002. 740. 
+##  2 EPSS            R4    renato_acid   renato_ac_R4 0.0138       218  885. 218  
+##  3 VGGGRALDY       R4    renato_acid   renato_ac_R4 0.0401       633  642. 158. 
+##  4 VGGGRALDY       R4    renato_pepti… renato_pep_… 0.0354      2574  567. 644. 
+##  5 GRWGSY          R4    renato_pepti… renato_pep_… 0.292      21192  425. 482. 
+##  6 EPSS            R4    renato_pepti… renato_pep_… 0.00642      466  411. 466  
+##  7 DGVAVAGLDY      R4    renato_pepti… renato_pep_… 0.252      18304  329. 374. 
+##  8 GGIVGAPDY       R4    renato_pepti… renato_pep_… 0.0252      1829  323. 366. 
+##  9 GRGYSGYDRPFDY   R4    renato_acid   renato_ac_R4 0.00488       77  313.  77  
+## 10 GRGYSGYDRPFDY   R4    renato_pepti… renato_pep_… 0.00450      327  288. 327  
+## 11 GRWGSY          R4    renato_acid   renato_ac_R4 0.196       3094  285.  70.3
+## 12 DAHRKGYYGMDV    R4    renato_pepti… renato_pep_… 0.00836      607  268. 304. 
+## 13 GGIVGAPDY       R4    renato_acid   renato_ac_R4 0.0209       329  267.  65.8
+## 14 GGVNWNDQ        R4    rafael        rafael_R4    0.0112       620  252. 310  
+## 15 DAHRKGYYGMDV    R4    renato_acid   renato_ac_R4 0.00697      110  223.  55  
+## 16 GRWGGY          R4    renato_pepti… renato_pep_… 0.00343      249  220. 249  
+## 17 PQQWLAWTGAEGYF… R4    renato_pepti… renato_pep_… 0.0273      1985  219. 248. 
+## 18 APAGREFDY       R4    rafael        rafael_R4    0.00456      252  205. 252
+```
+
+```r
+b %>%
+      filter(cycle == "R4", fcp == 1, fcq == 1) %>%
+      select(cdr3, cdrp, fcp, quantity, fcq) %>% 
+      ggplot() + 
+        geom_density(aes(quantity))
+```
+
+![](cdr_analysis_02_files/figure-html/drafts-2.png)<!-- -->
+
+```r
+ggplot(filter(b, cycle == "R4")) +
+  geom_point(aes(fcp, fcq))
+```
+
+![](cdr_analysis_02_files/figure-html/drafts-3.png)<!-- -->
 <!-- ### Isolando apenas as sequências CDR3 enriquecidas -->
 
 <!-- Como é possível perceber pelos dados acima mostrados, temos muitas reads no dataframe. -->
