@@ -185,7 +185,7 @@ cdr_df %>% filter(fcp > 1000) %>% select(cdr3:fcq)
 cdr_df %>% filter(cdr3 == "AHIAAEYNWFDP") %>% select(cdr3:fcq)
 ```
 
-```{r data_processing_2}
+```{r data_exploration_4}
 
 # search for enriched CDR3s
 for (i in c("fcp", "fcq")){
@@ -207,6 +207,200 @@ print(
 )
 
 }
+```
+
+
+### PCA for all groups
+
+```{r pca_1}
+# PCA for all groups
+cdr_df %>%
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_all
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_all %<>% select(!c(which(apply(cdr_rich_df_all, 2, var)==0)))
+
+cdr_rich_pca_all_groups <- cdr_rich_df_all %>% pca()
+
+cdr_rich_df_all %>%
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_all_groups
+
+ggplot_pca(
+  cdr_rich_pca_all_groups,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_all_groups
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "All 3 experiments used to perform the PCA"
+  )
+
+summary(cdr_rich_pca_all_groups)
+
+```
+
+### PCA Renato's groups
+
+```{r pca_2}
+# PCA for renato's groups
+cdr_df %>%
+          filter(str_detect(expgroup, "renato")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_groups
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_groups %<>% select(!c(which(apply(cdr_rich_df_renato_groups, 2, var)==0)))
+
+cdr_rich_pca_renato_groups <- cdr_rich_df_renato_groups %>% 
+                              pca()
+
+cdr_rich_df_all %>%
+          filter(str_detect(expgroup, "renato")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_groups
+
+ggplot_pca(
+  cdr_rich_pca_renato_groups,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_groups
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato's experiments"
+  )
+
+summary(cdr_rich_pca_renato_groups)
+```
+
+### PCA Renato Acid
+
+```{r pca_3}
+# PCA for renato acid
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_acid")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_acid
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_acid %<>% select(!c(which(apply(cdr_rich_df_renato_acid, 2, var)==0)))
+
+cdr_rich_pca_renato_acid <- cdr_rich_df_renato_acid %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_acid")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_acid
+
+ggplot_pca(
+  cdr_rich_pca_renato_acid,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_acid
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato Acid experiment"
+  )
+
+summary(cdr_rich_pca_renato_acid)
+```
+
+### PCA Renato Peptide
+
+```{r pca_4}
+# PCA for renato peptide
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_pep")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_pep
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_pep %<>% select(!c(which(apply(cdr_rich_df_renato_pep, 2, var)==0)))
+
+cdr_rich_pca_renato_pep <- cdr_rich_df_renato_pep %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_pep")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_pep
+
+ggplot_pca(
+  cdr_rich_pca_renato_pep,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_pep
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato Peptide experiment"
+  )
+
+summary(cdr_rich_pca_renato_pep)
+```
+
+### PCA Rafael
+
+```{r pca_5}
+# PCA for rafael
+cdr_df %>%
+          filter(str_detect(expgroup, "rafael")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_rafael
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_rafael %<>% select(!c(which(apply(cdr_rich_df_rafael, 2, var)==0)))
+
+cdr_rich_pca_rafael <- cdr_rich_df_rafael %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "rafael")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_rafael
+
+ggplot_pca(
+  cdr_rich_pca_rafael,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_rafael
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Rafael's experiment"
+  )
+
+summary(cdr_rich_pca_renato_pep)
 ```
 
 ##  Draft section
