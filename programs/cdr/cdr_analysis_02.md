@@ -306,28 +306,81 @@ cdr_df %>% filter(cdr3 == "AHIAAEYNWFDP") %>% select(cdr3:fcq)
 for (i in c("fcp", "fcq")){
 cdr_df %>% 
           group_by(expgroup) %>% 
-          arrange(desc(i)) %>% 
+          arrange(desc(.[[i]]), .by_group = TRUE) %>% 
           slice_head(n = 10) %>% 
           select(cdr3:fcq) -> tmp_plot_1
-    
-    
-          print(ggplot(tmp_plot_1) +
-            geom_density(aes(quantity)))
+  
+print(
+  ggplot(tmp_plot_1) +
+    geom_density(aes(.data[[i]], color = expgroup, fill = expgroup), alpha = 0.3)
+)
 
-cdr_df %>% 
-          group_by(expgroup) %>% 
-          arrange(desc(i)) %>% 
-          slice_head(n = 10) -> tmp_plot_2
+print(
+  ggplot(tmp_plot_1, aes(expgroup, .data[[i]])) +
+    geom_violin(aes(fill = expgroup)) +
+    geom_jitter(aes(shape = expgroup), alpha = 0.7)
+)
 
-          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
-            geom_violin(aes(fill = expgroup)) +
-            geom_jitter(aes(shape = expgroup)))
 }
 ```
 
 ![](cdr_analysis_02_files/figure-html/data_processing_2-1.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-2.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-3.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-4.png)<!-- -->
 
 ##  Draft section
+
+
+```r
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcp)) %>% 
+          slice_head(n = 10) %>% 
+          select(cdr3:fcq) -> tmp_plot_1
+    
+    
+          print(ggplot(tmp_plot_1) +
+            geom_density(aes(quantity))) +
+            facet_grid(expgroup ~ .)
+```
+
+![](cdr_analysis_02_files/figure-html/drafts1-1.png)<!-- -->![](cdr_analysis_02_files/figure-html/drafts1-2.png)<!-- -->
+
+```r
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcp)) %>% 
+          slice_head(n = 10) -> tmp_plot_2
+
+          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+```
+
+![](cdr_analysis_02_files/figure-html/drafts1-3.png)<!-- -->
+
+```r
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcq)) %>% 
+          slice_head(n = 10) -> tmp_plot_3
+
+          print(ggplot(tmp_plot_3, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+```
+
+![](cdr_analysis_02_files/figure-html/drafts1-4.png)<!-- -->
+
+```r
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcq), .by_group=T) %>% 
+          slice_head(n = 10) %>% 
+          ggplot() +
+            geom_point(aes(fcp, fcq)) +
+            facet_grid(expgroup ~ .)
+```
+
+![](cdr_analysis_02_files/figure-html/drafts1-5.png)<!-- -->
 
 
 ```r
@@ -339,7 +392,7 @@ cdr_df %>%
             facet_grid(expgroup ~ .)
 ```
 
-![](cdr_analysis_02_files/figure-html/drafts-1.png)<!-- -->
+![](cdr_analysis_02_files/figure-html/drafts2-1.png)<!-- -->
 
 ```r
 cdr_df %>% group_by(experiment) -> df_cdr_exp
@@ -377,14 +430,14 @@ df_cdr_exp %>%
 ```
 ## # A tibble: 6 x 5
 ## # Groups:   ham [2]
-##   experiment    cdr3             quantity   ham   per
-##   <chr>         <chr>               <int> <dbl> <dbl>
-## 1 renato_pep_R4 RRDNSGNTPFDD            1     0  2.60
-## 2 renato_pep_R4 DYGGPRGARYYYGMDV        5     0  2.60
-## 3 renato_pep_R4 GRWRSF                  2     0  2.60
-## 4 renato_pep_R4 PLAGLHY                22     1  2.60
-## 5 renato_pep_R4 EMWGPEY                65     1  2.60
-## 6 renato_pep_R4 GRGYSGYDRPFDY         327     1  2.60
+##   experiment    cdr3       quantity   ham   per
+##   <chr>         <chr>         <int> <dbl> <dbl>
+## 1 renato_pep_R4 DGVAVAGLDN        3     0  2.60
+## 2 renato_pep_R4 DRDHRFDS          2     0  2.60
+## 3 renato_pep_R4 GLYSSGRIDV        1     0  2.60
+## 4 renato_pep_R4 GRWGSF           39     1  2.60
+## 5 renato_pep_R4 DLGIPDDY         52     1  2.60
+## 6 renato_pep_R4 PLTGLHY        3440     1  2.60
 ```
 
 ```r
@@ -420,12 +473,12 @@ cdr_df %>%
 ## # Groups:   expgroup, cycle [6]
 ##   cdr3             cycle expgroup       experiment         cdrp quantity
 ##   <chr>            <chr> <chr>          <chr>             <dbl>    <int>
-## 1 EYSGDPRRIDY      R0    rafael         rafael_R0     0.0000223        1
-## 2 RISMMGSQH        R4    rafael         rafael_R4     0.0000181        1
-## 3 DQGYYYDSSDY      R0    renato_acid    renato_ac_R0  0.0000156        1
-## 4 GGSSSPGLVGFHSMDV R4    renato_acid    renato_ac_R4  0.000254         4
-## 5 DRGMTTVTTVDY     R0    renato_peptide renato_pep_R0 0.0000468        3
-## 6 GGWGSS           R4    renato_peptide renato_pep_R4 0.0000275        2
+## 1 FYSNNWNEVFCDY    R0    rafael         rafael_R0     0.0000223        1
+## 2 EEELTGTGYYYYGMDV R4    rafael         rafael_R4     0.0000362        2
+## 3 APYDILTGYSN      R0    renato_acid    renato_ac_R0  0.0000156        1
+## 4 GTMYGLVPSDS      R4    renato_acid    renato_ac_R4  0.0000634        1
+## 5 DPYDLWSGNSIVY    R0    renato_peptide renato_pep_R0 0.0000156        1
+## 6 VGGRRALDY        R4    renato_peptide renato_pep_R4 0.0000275        2
 ```
 
 ```r
@@ -528,14 +581,14 @@ b %>%
         geom_density(aes(quantity))
 ```
 
-![](cdr_analysis_02_files/figure-html/drafts-2.png)<!-- -->
+![](cdr_analysis_02_files/figure-html/drafts2-2.png)<!-- -->
 
 ```r
 ggplot(filter(b, cycle == "R4")) +
   geom_point(aes(fcp, fcq))
 ```
 
-![](cdr_analysis_02_files/figure-html/drafts-3.png)<!-- -->
+![](cdr_analysis_02_files/figure-html/drafts2-3.png)<!-- -->
 <!-- ### Isolando apenas as sequências CDR3 enriquecidas -->
 
 <!-- Como é possível perceber pelos dados acima mostrados, temos muitas reads no dataframe. -->

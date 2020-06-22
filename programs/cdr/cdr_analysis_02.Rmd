@@ -191,28 +191,66 @@ cdr_df %>% filter(cdr3 == "AHIAAEYNWFDP") %>% select(cdr3:fcq)
 for (i in c("fcp", "fcq")){
 cdr_df %>% 
           group_by(expgroup) %>% 
-          arrange(desc(i)) %>% 
+          arrange(desc(.[[i]]), .by_group = TRUE) %>% 
           slice_head(n = 10) %>% 
           select(cdr3:fcq) -> tmp_plot_1
-    
-    
-          print(ggplot(tmp_plot_1) +
-            geom_density(aes(quantity)))
+  
+print(
+  ggplot(tmp_plot_1) +
+    geom_density(aes(.data[[i]], color = expgroup, fill = expgroup), alpha = 0.3)
+)
 
-cdr_df %>% 
-          group_by(expgroup) %>% 
-          arrange(desc(i)) %>% 
-          slice_head(n = 10) -> tmp_plot_2
+print(
+  ggplot(tmp_plot_1, aes(expgroup, .data[[i]])) +
+    geom_violin(aes(fill = expgroup)) +
+    geom_jitter(aes(shape = expgroup), alpha = 0.7)
+)
 
-          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
-            geom_violin(aes(fill = expgroup)) +
-            geom_jitter(aes(shape = expgroup)))
 }
 ```
 
 ##  Draft section
 
-```{r drafts}
+```{r drafts1}
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcp)) %>% 
+          slice_head(n = 10) %>% 
+          select(cdr3:fcq) -> tmp_plot_1
+    
+    
+          print(ggplot(tmp_plot_1) +
+            geom_density(aes(quantity))) +
+            facet_grid(expgroup ~ .)
+
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcp)) %>% 
+          slice_head(n = 10) -> tmp_plot_2
+
+          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+          
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcq)) %>% 
+          slice_head(n = 10) -> tmp_plot_3
+
+          print(ggplot(tmp_plot_3, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+          
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcq), .by_group=T) %>% 
+          slice_head(n = 10) %>% 
+          ggplot() +
+            geom_point(aes(fcp, fcq)) +
+            facet_grid(expgroup ~ .)
+```
+
+```{r drafts2}
 cdr_df %>% 
           filter(cycle == "R4", fcp == 1, fcq == 1) %>%
           select(cdr3, cdrp, fcp, quantity, fcq) %>%
