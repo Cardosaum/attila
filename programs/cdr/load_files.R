@@ -32,6 +32,7 @@ library(magrittr, quietly = TRUE)
 library(ggforce, quietly = TRUE)
 library(knitr, quietly = TRUE)
 library(ggsci, quietly = TRUE)
+library(AMR, quietly = TRUE)
 
 # set custom theme for all plots
 # credit: https://stackoverflow.com/a/16437625/10719703
