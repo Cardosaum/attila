@@ -52,7 +52,9 @@ kable(
 
 ```{r load_data}
 cdr_df <- load_cdr(names(data_files_and_size))
+```
 
+```{r data_processing_1}
 cdr_df %<>% 
           mutate(experiment = case_when(
                                   str_detect(file, "rafael.*R4") ~ "rafael_R4",
@@ -65,14 +67,26 @@ cdr_df %<>%
                                   str_detect(file, "R4") ~ "R4",
                                   str_detect(file, "R0") ~ "R0"),
                 expgroup = case_when(
-                                  str_detect(file, "rafael") ~ "rafael_CD20",
+                                  str_detect(file, "rafael") ~ "rafael",
                                   str_detect(file, "renato.*acid") ~ "renato_acid",
                                   TRUE ~ "renato_peptide")) %>% 
           select(cdr3, cycle, expgroup, experiment, everything())
 
-dim(cdr_df)
-names(cdr_df)
+cdr_df %<>% 
+          # select(cdr3:quantity) %>% 
+          # filter(quantity > 400) %>% 
+          group_by(cdr3, expgroup) %>% 
+          # filter(n()>1) %>% 
+          arrange(cycle, .by_group = TRUE) %>% 
+          mutate(
+            fcp = cdrp / lag(cdrp, default = first(cdrp)),
+            fcq = quantity / lag(quantity, default = first(quantity))) %>% 
+          select(cdr3:quantity, fcp, fcq, everything())
+
+glimpse(cdr_df)
 ```
+
+## Análise exploratória
 
 ```{r data_exploration_1}
 cdr_df %>% 
@@ -106,35 +120,107 @@ ggplot(cdr_df_summary_per_experiment) +
 ```
 
 ```{r data_exploration_2}
-
-# search for enriched CDR3s
-
-# analysing cdrp
-
 cdr_df %>% 
             group_by(experiment) %>% 
             ggplot() +
               geom_density(aes(cdrp, color = experiment, fill = experiment), alpha = 0.2) +
               labs(
-                title = "CDR3 percentage of prevalence distribuition"
+                title = "Density plot of CDR3 Percentage of Prevalence",
+                x = "CDR3 Percentage of Prevalence (CDRP)"
               ) +
-              xlim(0.01, 0.33)
+              xlim(0.01, 0.33) +
+              facet_grid(expgroup ~ .)
 
 cdr_df %>% 
-            group_by(experiment) -> df_cdr_exp
-
-cdr_exp_qnt_p1 <- 
-            ggplot(df_cdr_exp) +
+            group_by(experiment) %>% 
+            ggplot() +
               geom_density(
                 aes(
                   x = quantity,
                   color = experiment,
                   fill = experiment),
                 alpha = 0.2) +
-                # stat = "bin") +
               labs(
-                title = "CDR3 percentage of prevalence distribuition"
-              )
+                title = "Density plot of Quantity Distribuition",
+                x = "Quantity"
+              ) + 
+            facet_zoom(xlim = c(0, 50))
+```
+
+```{r data_exploration_3}
+ggplot(cdr_df) +
+  geom_point(aes(cdrp, quantity, color = cycle)) +
+  facet_grid(expgroup ~ .) +
+  labs(
+    title = "Correlation between CDR3 percentage of prevalence and Quantity",
+    caption = "Note the interesting different trend between R0 and R4 in \"Renato Acid\" experiment.",
+    x = "CDR3 Percentage of Prevalence (CDRP)",
+    y = "Quantity"
+  )
+
+ggplot(cdr_df) +
+  geom_point(aes(fcp, fcq, color = expgroup)) +
+  facet_grid(expgroup ~ .) + 
+  labs(
+    title = "Correlation between Fold-Changes",
+    subtitle = "With outlier",
+    caption = "Note how different the correlation is between experiment groups.",
+    x = "Fold-Change by Percentage",
+    y = "Fold-Change by Quantity"
+  )
+
+ggplot(filter(cdr_df, fcp < 2E3)) +
+  geom_point(aes(fcp, fcq, color = expgroup)) +
+  facet_grid(expgroup ~ .) + 
+  labs(
+    title = "Correlation between Fold-Changes",
+    subtitle = "Without outlier",
+    caption = "Note how different the correlation is between experiment groups.",
+    x = "Fold-Change by Percentage",
+    y = "Fold-Change by Quantity"
+  )
+
+# filtering the outlier.
+cdr_df %>% filter(fcp > 1000) %>% select(cdr3:fcq)
+cdr_df %>% filter(cdr3 == "AHIAAEYNWFDP") %>% select(cdr3:fcq)
+```
+
+```{r data_processing_2}
+
+# search for enriched CDR3s
+for (i in c("fcp", "fcq")){
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(i)) %>% 
+          slice_head(n = 10) %>% 
+          select(cdr3:fcq) -> tmp_plot_1
+    
+    
+          print(ggplot(tmp_plot_1) +
+            geom_density(aes(quantity)))
+
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(i)) %>% 
+          slice_head(n = 10) -> tmp_plot_2
+
+          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+}
+```
+
+##  Draft section
+
+```{r drafts}
+cdr_df %>% 
+          filter(cycle == "R4", fcp == 1, fcq == 1) %>%
+          select(cdr3, cdrp, fcp, quantity, fcq) %>%
+          ggplot() +
+            geom_density(aes(quantity)) +
+            facet_grid(expgroup ~ .)
+
+cdr_df %>% group_by(experiment) -> df_cdr_exp
 
 df_cdr_exp %>% summarise(quantiles = quantile(quantity))
 df_cdr_exp %>% 
@@ -144,16 +230,54 @@ df_cdr_exp %>%
               mutate(per = (sum(ham)/length(ham)) * 100) %>% 
               group_by(ham) %>% sample_n(3)
 
-cdr_exp_qnt_p1 + facet_zoom(xlim = c(0, 50))
+cdr_df %>% 
+          group_by(expgroup, cdr3, cycle) %>% 
+          filter(cdr3 == "FIVESK") %>% 
+          select(cdr3:quantity) %>% 
+          arrange(expgroup)
+
+cdr_df %>% 
+          group_by(expgroup, cycle) %>% 
+          select(cdr3:quantity) %>% 
+          sample_n(1)
+          
 
 cdr_df %>%
           group_by(experiment) %>% 
           select(cdr3:quantity)
 
+# analysing cdrp
 
-# analysing fold change
+cdr_df %>% 
+          select(cdr3:quantity) %>% 
+          # filter(quantity > 400) %>% 
+          group_by(cdr3, expgroup) %>% 
+          # filter(n()>1) %>% 
+          arrange(cycle, .by_group = TRUE) %>% 
+          mutate(
+            fcp = cdrp / lag(cdrp, default = first(cdrp)),
+            fcq = quantity / lag(quantity, default = first(quantity))) %>% 
+          select(cdr3:quantity, fcp, fcq, everything()) -> b
+
+b %>% 
+      group_by(cdr3, expgroup) %>% 
+      filter(n()>1) %>% 
+      group_by(cycle, .add=T) %>% 
+      summarise(n = n(), s = sum(fcp), q = sum(quantity), c = sum(cdrp)) %>% print()
+
+b %>% filter(fcp > 200) %>% arrange(-fcp)
+
+b %>%
+      filter(cycle == "R4", fcp == 1, fcq == 1) %>%
+      select(cdr3, cdrp, fcp, quantity, fcq) %>% 
+      ggplot() + 
+        geom_density(aes(quantity))
+
+ggplot(filter(b, cycle == "R4")) +
+  geom_point(aes(fcp, fcq))
+
+
 ```
-
 <!-- ### Isolando apenas as sequências CDR3 enriquecidas -->
 
 <!-- Como é possível perceber pelos dados acima mostrados, temos muitas reads no dataframe. -->
