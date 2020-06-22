@@ -324,7 +324,305 @@ print(
 }
 ```
 
-![](cdr_analysis_02_files/figure-html/data_processing_2-1.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-2.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-3.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_processing_2-4.png)<!-- -->
+![](cdr_analysis_02_files/figure-html/data_exploration_4-1.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_exploration_4-2.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_exploration_4-3.png)<!-- -->![](cdr_analysis_02_files/figure-html/data_exploration_4-4.png)<!-- -->
+
+
+### PCA for all groups
+
+
+```r
+# PCA for all groups
+cdr_df %>%
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_all
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_all %<>% select(!c(which(apply(cdr_rich_df_all, 2, var)==0)))
+
+cdr_rich_pca_all_groups <- cdr_rich_df_all %>% pca()
+
+cdr_rich_df_all %>%
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_all_groups
+
+ggplot_pca(
+  cdr_rich_pca_all_groups,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_all_groups
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "All 3 experiments used to perform the PCA"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/pca_1-1.png)<!-- -->
+
+```r
+summary(cdr_rich_pca_all_groups)
+```
+
+```
+## Importance of components:
+##                           PC1    PC2    PC3    PC4     PC5    PC6     PC7
+## Standard deviation     2.7519 2.3224 2.2950 1.9197 1.60109 1.5073 1.32699
+## Proportion of Variance 0.2047 0.1458 0.1424 0.0996 0.06928 0.0614 0.04759
+## Cumulative Proportion  0.2047 0.3504 0.4928 0.5924 0.66167 0.7231 0.77066
+##                           PC8     PC9    PC10    PC11    PC12    PC13    PC14
+## Standard deviation     1.2975 1.09811 1.03683 0.98567 0.96154 0.84203 0.74689
+## Proportion of Variance 0.0455 0.03259 0.02905 0.02626 0.02499 0.01916 0.01508
+## Cumulative Proportion  0.8162 0.84875 0.87781 0.90407 0.92905 0.94822 0.96329
+##                           PC15    PC16    PC17    PC18    PC19    PC20    PC21
+## Standard deviation     0.64239 0.60184 0.48230 0.33095 0.29088 0.25643 0.25130
+## Proportion of Variance 0.01115 0.00979 0.00629 0.00296 0.00229 0.00178 0.00171
+## Cumulative Proportion  0.97445 0.98424 0.99052 0.99348 0.99577 0.99755 0.99925
+##                           PC22    PC23    PC24      PC25      PC26      PC27
+## Standard deviation     0.16190 0.03461 0.01458 7.802e-16 2.104e-16 1.998e-16
+## Proportion of Variance 0.00071 0.00003 0.00001 0.000e+00 0.000e+00 0.000e+00
+## Cumulative Proportion  0.99996 0.99999 1.00000 1.000e+00 1.000e+00 1.000e+00
+##                             PC28      PC29      PC30
+## Standard deviation     1.998e-16 1.998e-16 1.998e-16
+## Proportion of Variance 0.000e+00 0.000e+00 0.000e+00
+## Cumulative Proportion  1.000e+00 1.000e+00 1.000e+00
+```
+
+### PCA Renato's groups
+
+
+```r
+# PCA for renato's groups
+cdr_df %>%
+          filter(str_detect(expgroup, "renato")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_groups
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_groups %<>% select(!c(which(apply(cdr_rich_df_renato_groups, 2, var)==0)))
+
+cdr_rich_pca_renato_groups <- cdr_rich_df_renato_groups %>% 
+                              pca()
+
+cdr_rich_df_all %>%
+          filter(str_detect(expgroup, "renato")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_groups
+
+ggplot_pca(
+  cdr_rich_pca_renato_groups,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_groups
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato's experiments"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/pca_2-1.png)<!-- -->
+
+```r
+summary(cdr_rich_pca_renato_groups)
+```
+
+```
+## Importance of components:
+##                           PC1    PC2    PC3    PC4     PC5     PC6     PC7
+## Standard deviation     2.9959 2.5982 2.4532 2.1606 1.74641 1.66164 1.40577
+## Proportion of Variance 0.2426 0.1825 0.1627 0.1262 0.08243 0.07462 0.05341
+## Cumulative Proportion  0.2426 0.4250 0.5877 0.7139 0.79629 0.87091 0.92433
+##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
+## Standard deviation     1.04492 0.92190 0.79227 0.36597 0.29748 0.08359 0.03343
+## Proportion of Variance 0.02951 0.02297 0.01696 0.00362 0.00239 0.00019 0.00003
+## Cumulative Proportion  0.95383 0.97680 0.99377 0.99739 0.99978 0.99997 1.00000
+##                             PC15      PC16      PC17      PC18      PC19
+## Standard deviation     1.188e-15 3.584e-16 2.169e-16 1.521e-16 8.159e-17
+## Proportion of Variance 0.000e+00 0.000e+00 0.000e+00 0.000e+00 0.000e+00
+## Cumulative Proportion  1.000e+00 1.000e+00 1.000e+00 1.000e+00 1.000e+00
+##                             PC20
+## Standard deviation     6.349e-17
+## Proportion of Variance 0.000e+00
+## Cumulative Proportion  1.000e+00
+```
+
+### PCA Renato Acid
+
+
+```r
+# PCA for renato acid
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_acid")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_acid
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_acid %<>% select(!c(which(apply(cdr_rich_df_renato_acid, 2, var)==0)))
+
+cdr_rich_pca_renato_acid <- cdr_rich_df_renato_acid %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_acid")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_acid
+
+ggplot_pca(
+  cdr_rich_pca_renato_acid,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_acid
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato Acid experiment"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/pca_3-1.png)<!-- -->
+
+```r
+summary(cdr_rich_pca_renato_acid)
+```
+
+```
+## Importance of components:
+##                           PC1    PC2    PC3    PC4     PC5     PC6     PC7
+## Standard deviation     3.0728 2.7559 2.4962 2.2001 1.65639 1.39806 1.08458
+## Proportion of Variance 0.2698 0.2170 0.1780 0.1383 0.07839 0.05584 0.03361
+## Cumulative Proportion  0.2698 0.4868 0.6648 0.8031 0.88148 0.93732 0.97093
+##                            PC8     PC9      PC10
+## Standard deviation     0.90124 0.45291 1.149e-15
+## Proportion of Variance 0.02321 0.00586 0.000e+00
+## Cumulative Proportion  0.99414 1.00000 1.000e+00
+```
+
+### PCA Renato Peptide
+
+
+```r
+# PCA for renato peptide
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_pep")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_pep
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_pep %<>% select(!c(which(apply(cdr_rich_df_renato_pep, 2, var)==0)))
+
+cdr_rich_pca_renato_pep <- cdr_rich_df_renato_pep %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_pep")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_pep
+
+ggplot_pca(
+  cdr_rich_pca_renato_pep,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_pep
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato Peptide experiment"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/pca_4-1.png)<!-- -->
+
+```r
+summary(cdr_rich_pca_renato_pep)
+```
+
+```
+## Importance of components:
+##                           PC1    PC2    PC3    PC4     PC5     PC6     PC7
+## Standard deviation     3.0927 2.6323 2.5744 2.1816 1.69511 1.46515 1.22007
+## Proportion of Variance 0.2657 0.1925 0.1841 0.1322 0.07982 0.05963 0.04135
+## Cumulative Proportion  0.2657 0.4582 0.6423 0.7745 0.85428 0.91391 0.95526
+##                            PC8     PC9      PC10
+## Standard deviation     0.98524 0.79992 1.071e-15
+## Proportion of Variance 0.02696 0.01777 0.000e+00
+## Cumulative Proportion  0.98223 1.00000 1.000e+00
+```
+
+### PCA Rafael
+
+
+```r
+# PCA for rafael
+cdr_df %>%
+          filter(str_detect(expgroup, "rafael")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_rafael
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_rafael %<>% select(!c(which(apply(cdr_rich_df_rafael, 2, var)==0)))
+
+cdr_rich_pca_rafael <- cdr_rich_df_rafael %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "rafael")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_rafael
+
+ggplot_pca(
+  cdr_rich_pca_rafael,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_rafael
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Rafael's experiment"
+  )
+```
+
+![](cdr_analysis_02_files/figure-html/pca_5-1.png)<!-- -->
+
+```r
+summary(cdr_rich_pca_renato_pep)
+```
+
+```
+## Importance of components:
+##                           PC1    PC2    PC3    PC4     PC5     PC6     PC7
+## Standard deviation     3.0927 2.6323 2.5744 2.1816 1.69511 1.46515 1.22007
+## Proportion of Variance 0.2657 0.1925 0.1841 0.1322 0.07982 0.05963 0.04135
+## Cumulative Proportion  0.2657 0.4582 0.6423 0.7745 0.85428 0.91391 0.95526
+##                            PC8     PC9      PC10
+## Standard deviation     0.98524 0.79992 1.071e-15
+## Proportion of Variance 0.02696 0.01777 0.000e+00
+## Cumulative Proportion  0.98223 1.00000 1.000e+00
+```
 
 ##  Draft section
 
@@ -589,289 +887,3 @@ ggplot(filter(b, cycle == "R4")) +
 ```
 
 ![](cdr_analysis_02_files/figure-html/drafts2-3.png)<!-- -->
-<!-- ### Isolando apenas as sequências CDR3 enriquecidas -->
-
-<!-- Como é possível perceber pelos dados acima mostrados, temos muitas reads no dataframe. -->
-<!-- Entretanto, nosso interesse por agora é nas sequências que foram enriquecidas após várias etapas de seleção. -->
-<!-- Para isso, nós precisaremos criar um subset do dataframe inicial, contendo apenas CDR3s que apresentam alto percentual de predominância em seu respectivo arquivo de leitura. -->
-
-<!-- Vou mostrar um exemplo do que quero dizer: -->
-
-<!-- ```{r data_processing_1} -->
-<!-- cdr %>% -->
-<!--       select(cdr3, type, cdrp, quantity, file) %>%  -->
-<!--       head() -> exemplo_unico_cdr -->
-
-<!-- knitr::kable(exemplo_unico_cdr) -->
-<!-- ``` -->
-
-<!-- Como é possível observar, nas duas primeras linhas temos uma mesma sequência, que apresenta um percentual de 100% predôminancia em seu respectivo arquivo de leiura. -->
-<!-- (coluna `cdrp` - cdr percentage, variando de 0 a 1). -->
-<!-- Porém, observamos também que a mesma sequência aparece nesse arquivo somente uma vez. -->
-<!-- Ou seja, esses dois primeiros arquivos contém só uma leitura, e, portanto, seu percentual de predominância será de 100%. -->
-<!-- Isso, por outro lado, não reflete enriquecimento de CDR3, e, portanto, nós precisamos remover esses casos. -->
-
-
-<!-- Pensando em como fazer a seleção dessas sequências enriquecidas, fiz algumas análises: -->
-
-<!-- ```{r data_exploration_1} -->
-<!-- ggplot(filter(cdr, type == "final")) + -->
-<!--   geom_histogram(aes(quantity)) -->
-
-<!-- ggplot(filter(cdr, type == "final")) + -->
-<!--   geom_histogram(aes(quantity)) + -->
-<!--   xlim(0, 300) -->
-
-<!-- cdr %>% -->
-<!--         filter(type == "final") %>%  -->
-<!--         mutate(level = case_when( -->
-<!--                   quantity <= 300 ~ "quantity <= 300", -->
-<!--                   TRUE ~ "quantity > 300")) %>% -->
-<!--         group_by(level) %>%  -->
-<!--         summarise("Number of CDR3 sequences" = n()) -> cdr_quantity_comparison_1 -->
-
-<!-- knitr::kable(cdr_quantity_comparison_1) -->
-<!-- ``` -->
-
-
-<!-- ```{r data_exploration_2} -->
-<!-- ggplot(filter(cdr, type == "final")) + -->
-<!--   geom_histogram(aes(cdrp)) -->
-
-<!-- ggplot(filter(cdr, type == "final")) + -->
-<!--   geom_histogram(aes(cdrp)) + -->
-<!--   xlim(0.5, 1) -->
-
-<!-- cdr %>% -->
-<!--         filter(type == "final") %>%  -->
-<!--         mutate(level = case_when( -->
-<!--                   cdrp <= 0.3 ~ "cdrp <= 0.3", -->
-<!--                   TRUE ~ "cdrp > 0.3")) %>% -->
-<!--         group_by(level) %>%  -->
-<!--         summarise("Percentage" = n()) -> cdr_cdrp_comparison_1 -->
-
-<!-- knitr::kable(cdr_cdrp_comparison_1, caption = "Percentage of prevalence of CDR3 sequence") -->
-
-
-<!-- cdr %>% -->
-<!--         filter(type == "final") %>%  -->
-<!--         mutate(level = case_when( -->
-<!--                   cdrp < 0.5 ~ "cdrp < 0.5", -->
-<!--                   TRUE ~ "cdrp > 0.5")) %>% -->
-<!--         group_by(level) %>%  -->
-<!--         summarise("Percentage" = n()) -> cdr_cdrp_comparison_2 -->
-
-<!-- knitr::kable(cdr_cdrp_comparison_2, caption = "Percentage of prevalence of CDR3 sequence") -->
-<!-- ``` -->
-
-<!-- Como é possível notar, temos 23 sequências de CDR3 que apresentam prevalência maior que 30% em arquivos de leitura individual, e 22 se considerarmos 50% de prevalência. -->
-
-<!-- Para termos noção do que isso significa, vejamos o seguinte: -->
-
-<!-- ```{r data_exploration_3} -->
-<!-- cdr$file %>% unique() %>% length() -> total_arquivos_leitura -->
-
-<!-- filter(cdr, type == "final")$file %>% unique() %>% length() -> total_arquivos_leitura_final_read -->
-
-<!-- tibble( -->
-<!--   "Arquivo de leitura" = c("Todos (Inicial + Final)", "Apenas Final", "Final com CDR3 prevalência >= 50%"), -->
-<!--   "Quantidade de Arquivos" = c(total_arquivos_leitura, total_arquivos_leitura_final_read, cdr_cdrp_comparison_2$Percentage[2]) -->
-<!-- ) %>% knitr::kable() -->
-<!-- ``` -->
-
-<!-- E, para mostrar todos os arquivos com prevalência maior que 50%: -->
-
-<!-- ```{r data_exploration_4} -->
-<!-- cdr %>%  -->
-<!--         filter(type == "final" & cdrp >= 0.5) %>%  -->
-<!--         select(cdr3, cdrp, quantity, file) %>%  -->
-<!--         knitr::kable() -->
-<!-- ``` -->
-
-
-<!-- Portanto, eu resolvi salvar esse dataframe como aquele contendo as sequências enriquecidas. -->
-
-<!-- ```{r data_processing_2} -->
-<!-- cdr_rich <- cdr %>% filter(type == "final" & cdrp >= 0.5)  -->
-<!-- ``` -->
-
-<!-- **Todo o código feito a partir daqui é um rascunho** -->
-
-<!-- Peço perdão pela bagunça nos próximos blocos. -->
-<!-- Eu escrevi isso para me ajudar a entender os dados, sem a intenção de apresentar isso para ninguém. -->
-
-<!-- ## Análise Exploratória -->
-
-<!-- ```{r eda1} -->
-<!-- cdr %>% -->
-<!--         ungroup() %>%  -->
-<!--         arrange(-cdrp, type, file) %>%  -->
-<!--         filter(quantity > 1) %>%  -->
-<!--         filter(type == "final") -> cdr_final -->
-
-<!-- cdr_final %>%  -->
-<!--                 filter(quantity > 1) %>%  -->
-<!--                 group_by(file) %>%  -->
-<!--                 slice_head(n = 1) -> cdr_enriched -->
-
-<!-- library(GGally) -->
-<!-- cdr_enriched %<>% -->
-<!--                 select(cdr3:SSF_Sheet, aromatic:file) -->
-
-<!-- cdr_enriched %>% -->
-<!--                 ungroup() %>% -->
-<!--                 select(-file) %>% -->
-<!--                 ggpairs(aes(alpha = 0.4)) -->
-<!-- ``` -->
-
-
-
-<!-- ```{r eda2} -->
-<!-- cdr_final %>%  -->
-<!--              ungroup() %>%  -->
-<!--              select(!c(cdr3, type, file, invalid)) -> cdr_final_pca -->
-
-<!-- pca_result <- prcomp(cdr_final_pca, center = T, scale. = T) -->
-<!-- summary(pca_result) -->
-
-<!-- plot(pca_result$x[,1], pca_result$x[,2]) -->
-<!-- cdr_final_pca -->
-
-<!-- cdr_final %>%  -->
-<!--               group_by(file) %>%  -->
-<!--               arrange(-cdrp) %>%  -->
-<!--               slice_head(n = 1) %>%  -->
-<!--               ungroup() %>%  -->
-<!--               select(!c(cdr3, type, file, invalid)) %>%  -->
-<!--               arrange(-cdrp) -> a -->
-
-<!-- # in this line we remove all collumns that have variance equal to 0 -->
-<!-- # Doing this, we can apply a pca to the dataframe without erros -->
-<!-- # credit goes to: https://stackoverflow.com/a/40317343 -->
-<!-- a <- select(a, !c(which(apply(a, 2, var)==0))) -->
-<!-- pca_a <- prcomp(a, center = T, scale. = T) -->
-<!-- summary(pca_a) -->
-<!-- plot(pca_a$x[,1], pca_a$x[,2]) -->
-
-<!-- ggplot(as_tibble(pca_a$x)) + -->
-<!--   geom_point(aes(PC1, PC2)) -->
-
-<!-- pca_a$x -->
-<!-- str(pca_a) -->
-
-<!-- pca_cdr_result <- cdr %>% -->
-<!--                         select(!c(cdr3, type, file, invalid)) %>% -->
-<!--                         prcomp(center = T, scale. = T) -->
-<!-- summary(pca_cdr_result) -->
-<!-- ``` -->
-
-<!-- ```{r eda3} -->
-<!-- cdr_final %>%  -->
-<!--               group_by(file) %>%  -->
-<!--               arrange(-cdrp) %>%  -->
-<!--               slice_head(n = 10) %>%  -->
-<!--               ungroup() %>%  -->
-<!--               select(!c(cdr3, type, file, invalid)) %>%  -->
-<!--               arrange(-cdrp) -> b -->
-
-<!-- b <- select(b, !c(which(apply(b, 2, var)==0))) -->
-<!-- b -->
-<!-- pca_b <- prcomp(b, center = T, scale. = T) -->
-<!-- summary(pca_b) -->
-<!-- plot(pca_b$x[,1], pca_b$x[,2]) -->
-
-<!-- ggplot(as_tibble(pca_b$x)) + -->
-<!--   geom_point(aes(PC1, PC2)) -->
-
-<!-- summary(pca_b) -->
-<!-- ``` -->
-
-<!-- ```{r eda4} -->
-<!-- summary(cdr$quantity) -->
-<!-- cdr %>%  -->
-<!--         filter(quantity >= 100) -> a -->
-<!-- a -->
-
-<!-- ggplot(a) + -->
-<!--   geom_density(aes(quantity)) -->
-
-<!-- ggplot(cdr) + -->
-<!--   geom_bar(aes(quantity)) + -->
-<!--   xlim(0, 30) -->
-
-<!-- ggplot(cdr) + -->
-<!--   geom_histogram(aes(quantity)) + -->
-<!--   xlim(0, 300) -->
-
-<!-- ggplot(cdr) + -->
-<!--   geom_density(aes(quantity), fill = "lightblue") + -->
-<!--   xlim(0, 300) -->
-
-<!-- quantile(cdr$quantity) -->
-
-<!-- dim(cdr) -->
-<!-- cdr %>% filter(quantity >= 1E3) %>% dim() -->
-<!-- cdr %>% filter(quantity >= 1E4) %>% dim() -->
-<!-- cdr %>% filter(quantity >= 1E5) %>% dim() -->
-
-<!-- cdr %>% filter(quantity >= 1E3) -> b -->
-<!-- b %>% group_by(type) %>% summarise(total = n()) -->
-<!-- b %>% group_by(type) %>% summarise(quantile = quantile(cdrp)) -> b_quantiles -->
-<!-- b_quantiles <- add_column(b_quantiles, quantiles = rep(attr(quantile(b$quantity), "names"), 2)) -->
-<!-- knitr::kable(b_quantiles) -->
-
-<!-- ggplot(b) + -->
-<!--   geom_density(aes(quantity)) -->
-
-<!-- b %>%  -->
-<!--       group_by(cdr3, type) %>%  -->
-<!--       arrange(-cdrp) -->
-
-<!-- b %>%  -->
-<!--       group_by(cdr3, type) %>%  -->
-<!--       select(cdr3, type, cdrp, quantity) %>%  -->
-<!--       arrange(-cdrp, -quantity) %>%  -->
-<!--       slice_head(n = 1) %>%  -->
-<!--       arrange(-cdrp, -quantity)  -->
-
-<!-- b %>%  -->
-<!--       group_by(type, cdr3) %>%  -->
-<!--       summarise(total = n()) %>%  -->
-<!--       arrange(-total) -->
-<!-- b %>%  -->
-<!--       group_by(cdr3, type) %>%  -->
-<!--       select(cdr3, type, cdrp, quantity) %>%  -->
-<!--       arrange(-cdrp, -quantity) -> c -->
-
-<!-- c %>% filter(type == "initial") %>% slice_head(n = 1) -->
-
-<!-- ggplot(c) + -->
-<!--   geom_density(aes(cdrp, color = type), alpha = .4) -->
-<!-- ``` -->
-
-<!-- ```{r eda5} -->
-<!-- b %>% -->
-<!--     group_by(cdr3, type) %>%  -->
-<!--     summarise( -->
-<!--       quantity = sum(quantity), -->
-<!--       reads    = n()) %>%  -->
-<!--     arrange(-quantity, -reads) -> d -->
-
-<!-- d -->
-
-<!-- d %>% group_by(type) %>% summarise(n = n()) -->
-
-<!-- ggplot(d) + -->
-<!--   geom_density(aes(reads, color = type)) -->
-
-<!-- ggplot(d) + -->
-<!--   geom_boxplot(aes(type, log10(quantity), fill = type)) + -->
-<!--   geom_jitter(aes(type, log10(quantity), fill = type)) -->
-
-<!-- d -->
-<!-- ``` -->
-
-
-<!-- # Resultados -->
-
-<!-- # Conclusão -->
