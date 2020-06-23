@@ -1,0 +1,523 @@
+---
+title: "Análise exploratória de sequências CDR3"
+subtitle: "Terceira iteração"
+author: "Matheus Cardoso"
+date: "Jun 20, 2020"
+output:
+  html_document:
+    fig_caption: yes
+    highlight: zenburn
+    keep_md: yes
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introdução
+
+Essa análise será baseada na segunda iteração, porém mudando os dados analisados.
+Dessa vez, realizarei as análises nos dados de sequenciamento da Thais.
+
+```{r list_files}
+# this R script does all the setup for us
+source("./load_files.R")
+
+
+data_files_selected  <-
+    list.files(pattern = ".*thais_.*csv$", recursive = TRUE, ignore.case = TRUE)
+
+data_files_and_size <- sapply(data_files_selected, file.size)
+
+files_to_include_in_dataframe <- tibble(
+                                    "Files" = names(data_files_and_size),
+                                    "Size (in MB)" = (data_files_and_size/1E6))
+
+kable(
+     files_to_include_in_dataframe,
+     caption = "List of files to be analysed")
+```
+
+# métodos
+
+## Processamento dos dados
+
+```{r load_data}
+cdr_df <- load_cdr(names(data_files_and_size))
+```
+
+```{r data_processing_1}
+cdr_df %<>% 
+          mutate(expgroup = case_when(
+                                  str_detect(file, "thaisnovoheader") ~ "nh",
+                                  str_detect(file, "thais_29") ~ "29",
+                                  str_detect(file, "thais_66") ~ "66",
+                                  TRUE ~ "unknown"),
+                cycle = case_when(
+                                  str_detect(file, "R0_R2") ~ "R0_R2",
+                                  str_detect(file, "R0_R3") ~ "R0_R3",
+                                  str_detect(file, "R0_R4") ~ "R0_R4",
+                                  str_detect(file, "R2_R3") ~ "R2_R3",
+                                  str_detect(file, "R2_R4") ~ "R2_R4",
+                                  str_detect(file, "R3_R4") ~ "R3_R4",
+                                  TRUE ~ "unknown"), 
+                time = case_when(
+                                  str_detect(file, "Initial") ~ "initial",
+                                  str_detect(file, "Final") ~ "final",
+                                  TRUE ~ "unknown")) %>% 
+          select(cdr3, cycle, time, expgroup, everything())
+
+cdr_df %>% 
+          group_by(cdr3, expgroup) %>% 
+          arrange(cycle, .by_group = TRUE) %>% 
+          mutate(
+            fcp = cdrp / lag(cdrp, default = first(cdrp)),
+            fcq = quantity / lag(quantity, default = first(quantity))) %>% 
+          select(cdr3:quantity, fcp, fcq, everything())
+
+glimpse(cdr_df)
+```
+
+## Análise exploratória
+
+```{r data_exploration_1}
+cdr_df %>% 
+          group_by(expgroup, cycle) %>% 
+          summarise(
+            "No. distinct CDR3 sequences" = n(),
+            "Sum of all CDR3 sequences" = sum(quantity)) -> cdr_df_summary_per_experiment
+
+ggplot(cdr_df_summary_per_experiment) +
+  geom_bar(aes(
+            cycle,
+            `No. distinct CDR3 sequences`,
+            fill = cycle),
+          stat = "identity") +
+  facet_grid(. ~ expgroup) +
+  labs(
+    title = "Difference in number of distinct CDR3 sequences"
+  ) +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+ggplot(cdr_df_summary_per_experiment) +
+  geom_bar(aes(
+            cycle,
+            `Sum of all CDR3 sequences`,
+            fill = cycle),
+          stat = "identity") +
+  facet_grid(. ~ expgroup) +
+  labs(
+    title = "Difference in number of total CDR3 sequences"
+  ) +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+```{r data_exploration_2}
+cdr_df %>% 
+            ggplot() +
+              geom_density(aes(cdrp, color = expgroup, fill = expgroup), alpha = 0.2) +
+              labs(
+                title = "Density plot of CDR3 Percentage of Prevalence",
+                x = "CDR3 Percentage of Prevalence (CDRP)"
+              ) +
+              xlim(0.01, 0.33) +
+              facet_grid(expgroup ~ .)
+
+cdr_df %>% 
+            ggplot() +
+              geom_density(
+                aes(
+                  x = quantity,
+                  color = expgroup,
+                  fill = expgroup),
+                alpha = 0.2) +
+              labs(
+                title = "Density plot of Quantity Distribuition",
+                x = "Quantity"
+              ) + 
+            facet_zoom(xlim = c(0, 50))
+```
+
+```{r data_exploration_3}
+ggplot(cdr_df) +
+  geom_point(aes(cdrp, quantity, color = cycle)) +
+  facet_grid(expgroup ~ .) +
+  labs(
+    title = "Correlation between CDR3 percentage of prevalence and Quantity",
+    subtitle = "With outlier",
+    x = "CDR3 Percentage of Prevalence (CDRP)",
+    y = "Quantity"
+  )
+
+ggplot(filter(cdr_df, cdrp < 0.75)) +
+  geom_point(aes(cdrp, quantity, color = cycle)) +
+  facet_grid(expgroup ~ .) +
+  labs(
+    title = "Correlation between CDR3 percentage of prevalence and Quantity",
+    subtitle = "Without outlier",
+    x = "CDR3 Percentage of Prevalence (CDRP)",
+    y = "Quantity"
+  )
+
+ggplot(cdr_df) +
+  geom_point(aes(fcp, fcq, color = cycle)) +
+  facet_grid(expgroup ~ .) + 
+  labs(
+    title = "Correlation between Fold-Changes",
+    subtitle = "With outlier",
+    caption = "Note how different the correlation is between experiment groups.",
+    x = "Fold-Change by Percentage",
+    y = "Fold-Change by Quantity"
+  )
+
+ggplot(filter(cdr_df, fcp < 2E3)) +
+  geom_point(aes(fcp, fcq, color = expgroup)) +
+  facet_grid(expgroup ~ .) + 
+  labs(
+    title = "Correlation between Fold-Changes",
+    subtitle = "Without outlier",
+    caption = "Note how different the correlation is between experiment groups.",
+    x = "Fold-Change by Percentage",
+    y = "Fold-Change by Quantity"
+  )
+
+# filtering the outlier.
+cdr_df %>% filter(fcp > 1000) %>% select(cdr3:fcq)
+cdr_df %>% filter(cdr3 == "AHIAAEYNWFDP") %>% select(cdr3:fcq)
+```
+
+```{r data_exploration_4}
+
+# search for enriched CDR3s
+for (i in c("fcp", "fcq")){
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(.[[i]]), .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          select(cdr3:fcq) -> tmp_plot_1
+  
+print(
+  ggplot(tmp_plot_1) +
+    geom_density(aes(.data[[i]], color = expgroup, fill = expgroup), alpha = 0.3)
+)
+
+print(
+  ggplot(tmp_plot_1, aes(expgroup, .data[[i]])) +
+    geom_violin(aes(fill = expgroup)) +
+    geom_jitter(aes(shape = expgroup), alpha = 0.7)
+)
+
+}
+```
+
+
+### PCA for all groups
+
+```{r pca_1}
+# PCA for all groups
+cdr_df %>%
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_all
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_all %<>% select(!c(which(apply(cdr_rich_df_all, 2, var)==0)))
+
+cdr_rich_pca_all_groups <- cdr_rich_df_all %>% pca()
+
+cdr_rich_df_all %>%
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_all_groups
+
+ggplot_pca(
+  cdr_rich_pca_all_groups,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_all_groups
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "All 3 experiments used to perform the PCA"
+  )
+
+summary(cdr_rich_pca_all_groups)
+
+```
+
+### PCA Renato's groups
+
+```{r pca_2}
+# PCA for renato's groups
+cdr_df %>%
+          filter(str_detect(expgroup, "renato")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_groups
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_groups %<>% select(!c(which(apply(cdr_rich_df_renato_groups, 2, var)==0)))
+
+cdr_rich_pca_renato_groups <- cdr_rich_df_renato_groups %>% 
+                              pca()
+
+cdr_rich_df_all %>%
+          filter(str_detect(expgroup, "renato")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_groups
+
+ggplot_pca(
+  cdr_rich_pca_renato_groups,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_groups
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato's experiments"
+  )
+
+summary(cdr_rich_pca_renato_groups)
+```
+
+### PCA Renato Acid
+
+```{r pca_3}
+# PCA for renato acid
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_acid")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_acid
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_acid %<>% select(!c(which(apply(cdr_rich_df_renato_acid, 2, var)==0)))
+
+cdr_rich_pca_renato_acid <- cdr_rich_df_renato_acid %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_acid")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_acid
+
+ggplot_pca(
+  cdr_rich_pca_renato_acid,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_acid
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato Acid experiment"
+  )
+
+summary(cdr_rich_pca_renato_acid)
+```
+
+### PCA Renato Peptide
+
+```{r pca_4}
+# PCA for renato peptide
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_pep")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_renato_pep
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_renato_pep %<>% select(!c(which(apply(cdr_rich_df_renato_pep, 2, var)==0)))
+
+cdr_rich_pca_renato_pep <- cdr_rich_df_renato_pep %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "renato_pep")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_renato_pep
+
+ggplot_pca(
+  cdr_rich_pca_renato_pep,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_renato_pep
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Renato Peptide experiment"
+  )
+
+summary(cdr_rich_pca_renato_pep)
+```
+
+### PCA Rafael
+
+```{r pca_5}
+# PCA for rafael
+cdr_df %>%
+          filter(str_detect(expgroup, "rafael")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          ungroup() %>% 
+          select(where(is.numeric), expgroup) -> cdr_rich_df_rafael
+
+# remove collumns with variance equal to 0
+# credit: https://stackoverflow.com/a/40317343
+cdr_rich_df_rafael %<>% select(!c(which(apply(cdr_rich_df_rafael, 2, var)==0)))
+
+cdr_rich_pca_rafael <- cdr_rich_df_rafael %>%
+                              pca()
+
+cdr_df %>%
+          filter(str_detect(expgroup, "rafael")) %>% 
+          group_by(expgroup) %>% 
+          arrange(-fcp, .by_group = TRUE) %>% 
+          slice_head(n = 10) %>% 
+          .$expgroup -> cdr_rich_pca_color_rafael
+
+ggplot_pca(
+  cdr_rich_pca_rafael,
+  arrows_size = 0.2,
+  labels = cdr_rich_pca_color_rafael
+  ) +
+  labs(
+    title = "PCA for enriched CDR3 sequences",
+    subtitle = "Only for Rafael's experiment"
+  )
+
+summary(cdr_rich_pca_renato_pep)
+```
+
+##  Draft section
+
+```{r drafts1}
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcp)) %>% 
+          slice_head(n = 10) %>% 
+          select(cdr3:fcq) -> tmp_plot_1
+    
+    
+          print(ggplot(tmp_plot_1) +
+            geom_density(aes(quantity))) +
+            facet_grid(expgroup ~ .)
+
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcp)) %>% 
+          slice_head(n = 10) -> tmp_plot_2
+
+          print(ggplot(tmp_plot_2, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+          
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcq)) %>% 
+          slice_head(n = 10) -> tmp_plot_3
+
+          print(ggplot(tmp_plot_3, aes(expgroup, log10(quantity))) +
+            geom_violin(aes(fill = expgroup)) +
+            geom_jitter(aes(shape = expgroup)))
+          
+cdr_df %>% 
+          group_by(expgroup) %>% 
+          arrange(desc(fcq), .by_group=T) %>% 
+          slice_head(n = 10) %>% 
+          ggplot() +
+            geom_point(aes(fcp, fcq)) +
+            facet_grid(expgroup ~ .)
+```
+
+```{r drafts2}
+cdr_df %>% 
+          filter(cycle == "R4", fcp == 1, fcq == 1) %>%
+          select(cdr3, cdrp, fcp, quantity, fcq) %>%
+          ggplot() +
+            geom_density(aes(quantity)) +
+            facet_grid(expgroup ~ .)
+
+cdr_df %>% group_by(experiment) -> df_cdr_exp
+
+df_cdr_exp %>% summarise(quantiles = quantile(quantity))
+df_cdr_exp %>% 
+              filter(experiment == "renato_pep_R4") %>% 
+              mutate(ham = if_else(quantity > 20, 1, 0)) %>% 
+              select(cdr3, quantity, ham) %>% 
+              mutate(per = (sum(ham)/length(ham)) * 100) %>% 
+              group_by(ham) %>% sample_n(3)
+
+cdr_df %>% 
+          group_by(expgroup, cdr3, cycle) %>% 
+          filter(cdr3 == "FIVESK") %>% 
+          select(cdr3:quantity) %>% 
+          arrange(expgroup)
+
+cdr_df %>% 
+          group_by(expgroup, cycle) %>% 
+          select(cdr3:quantity) %>% 
+          sample_n(1)
+          
+
+cdr_df %>%
+          group_by(experiment) %>% 
+          select(cdr3:quantity)
+
+# analysing cdrp
+
+cdr_df %>% 
+          select(cdr3:quantity) %>% 
+          # filter(quantity > 400) %>% 
+          group_by(cdr3, expgroup) %>% 
+          # filter(n()>1) %>% 
+          arrange(cycle, .by_group = TRUE) %>% 
+          mutate(
+            fcp = cdrp / lag(cdrp, default = first(cdrp)),
+            fcq = quantity / lag(quantity, default = first(quantity))) %>% 
+          select(cdr3:quantity, fcp, fcq, everything()) -> b
+
+b %>% 
+      group_by(cdr3, expgroup) %>% 
+      filter(n()>1) %>% 
+      group_by(cycle, .add=T) %>% 
+      summarise(n = n(), s = sum(fcp), q = sum(quantity), c = sum(cdrp)) %>% print()
+
+b %>% filter(fcp > 200) %>% arrange(-fcp)
+
+b %>%
+      filter(cycle == "R4", fcp == 1, fcq == 1) %>%
+      select(cdr3, cdrp, fcp, quantity, fcq) %>% 
+      ggplot() + 
+        geom_density(aes(quantity))
+
+ggplot(filter(b, cycle == "R4")) +
+  geom_point(aes(fcp, fcq))
+
+
+```
