@@ -1,6 +1,6 @@
 ---
 title: "Análise exploratória de sequências CDR3"
-subtitle: "Terceira iteração"
+subtitle: "Terceira iteração - Dados Thais"
 author: "Matheus Cardoso"
 date: "Jun 20, 2020"
 output:

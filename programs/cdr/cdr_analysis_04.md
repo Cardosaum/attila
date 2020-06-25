@@ -1,6 +1,6 @@
 ---
 title: "Análise exploratória de sequências CDR3"
-subtitle: "Quarta Iteração"
+subtitle: "Quarta Iteração - Dados Carol"
 author: "Matheus Cardoso"
 date: "Jun 20, 2020"
 output:
@@ -27,7 +27,7 @@ knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE
 # Introdução
 
 Essa análise será baseada na segunda iteração, porém mudando os dados analisados.
-Dessa vez, realizarei as análises nos dados de sequenciamento da Thais.
+Dessa vez, realizarei as análises nos dados de sequenciamento da Carol.
 
 
 ```r
