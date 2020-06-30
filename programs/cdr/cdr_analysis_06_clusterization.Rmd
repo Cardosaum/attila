@@ -1,0 +1,128 @@
+---
+title: "Análise exploratória de sequências CDR3"
+subtitle: "Tentativa de clusterizar os dados"
+author: "Matheus Cardoso"
+date: "Jun 30, 2020"
+output:
+  html_document:
+    fig_caption: yes
+    highlight: zenburn
+    keep_md: yes
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup_knit, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r setup_env}
+source("./load_files.R")
+```
+
+```{r select_files}
+data_files_selected <- 
+  list.files(
+    pattern = ".*thais_.*csv$",
+    recursive = TRUE,
+    ignore.case = TRUE
+    )
+
+data_files_and_size <- 
+  sapply(data_files_selected, file.size)
+
+files_to_include_in_dataframe <- 
+  tibble(
+    "Files" = names(data_files_and_size),
+    "Size (in MB)" = data_files_and_size/1E6
+   )
+
+skimr::skim(files_to_include_in_dataframe)
+```
+
+```{r load_data}
+cdr <- load_cdr(names(data_files_and_size))
+
+cdr %<>% 
+  mutate(
+    expgroup = case_when(
+      str_detect(file, "thaisnovoheader") ~ "nh",
+      str_detect(file, "thais_29") ~ "29",
+      str_detect(file, "thais_66") ~ "66",
+      TRUE ~ "unknown"),
+    cycle = case_when(
+      str_detect(file, "R0_R2") ~ "R0_R2",
+      str_detect(file, "R0_R3") ~ "R0_R3",
+      str_detect(file, "R0_R4") ~ "R0_R4",
+      str_detect(file, "R2_R3") ~ "R2_R3",
+      str_detect(file, "R2_R4") ~ "R2_R4",
+      str_detect(file, "R3_R4") ~ "R3_R4",
+      TRUE ~ "unknown"),
+    time = case_when(
+        str_detect(file, "Initial") ~ "initial",
+        str_detect(file, "Final") ~ "final",
+        TRUE ~ "unknown")) %>% 
+  select(cdr3, cycle, time, expgroup, everything())
+
+cdr %<>% 
+  group_by(cdr3, expgroup, cycle) %>% 
+  arrange(desc(time), .by_group = TRUE) %>% 
+  mutate(
+    fcp = cdrp / lag(cdrp, default = first(cdrp)),
+    fcq = quantity / lag(quantity, default = first(quantity))
+  ) %>% 
+  select(cdr3:quantity, fcp, fcq, everything())
+```
+
+```{r select_enriched_sequences}
+cdr %>% 
+  filter(time == "final") %>% 
+  filter(str_detect(cycle, "R0")) %>% 
+  group_by(expgroup, cycle, time) %>% 
+  arrange(desc(fcp)) %>% 
+  slice_head(n = 1000) %>% 
+  ggplot(aes(expgroup, log10(fcp))) +
+    geom_violin(aes(fill = expgroup, color = expgroup), alpha = 0.5) +
+    geom_jitter(aes(shape = expgroup), alpha = 0.6, size = 1) +
+    stat_summary(
+      fun = mean,
+      fun.min = mean,
+      fun.max = mean,
+      geom = "crossbar",
+      # width = 0.5,
+      aes(color = expgroup)
+    ) +
+    facet_grid(. ~ cycle)
+
+cdr %>% 
+  filter(str_detect(cycle, "R0")) %>% 
+  filter(time == "final") %>% 
+  group_by(expgroup, cycle, time) %>% 
+  arrange(desc(fcp)) %>% 
+  slice_head(n = 1000) %>% 
+  ggplot(aes(fcp, color = expgroup, fill = expgroup)) +
+    geom_density(stat = "bin", alpha = 0.3) +
+    facet_grid(cycle ~ expgroup)
+
+cdr %>% 
+  filter(time == "final") %>% 
+  filter(str_detect(cycle, "R0")) %>% 
+  group_by(expgroup, cycle, time) %>% 
+  arrange(desc(fcp)) %>% 
+  slice_head(n = 1000) %>%
+  mutate(threshold = mean(log10(fcp))) %>% 
+  mutate(rich = if_else(log10(fcp) >= threshold, "rich", "poor")) %>% 
+  summarise(mean = mean(log10(fcp)), n_rich = sum(str_detect(rich, "rich")))
+  # select(cdr3:fcp, threshold, rich) %>% 
+  # glimpse()
+```
+
+
