@@ -320,3 +320,99 @@ tsne_out %>%
   ) %>% 
   layout(title = "Experiment 66")
 ```
+
+## clusterizarion_with_only_biochemistry_characteristics
+
+```{r clusterizarion_with_only_biochemistry_characteristics}
+library(Rtsne)
+set.seed(42)
+
+tsne_df <- cdr %>% 
+  # filter(!rich == "poor") %>%
+  filter(time == "final") %>% 
+  filter(cycle == "R0_R4") %>% 
+  filter(expgroup == "29")
+
+tsne_df %>% 
+  summarise(across(everything(), ~ all(sum(is.na(.x))))) %>% 
+  select(where(isTRUE))
+
+tsne_df %>% 
+  filter(is.na(threshold)) %>% 
+  select(rich, threshold, quantity)
+
+set.seed(42)
+tsne_out <- 
+  tsne_df %>% 
+    ungroup() %>% 
+    select(!where(is.character)) %>% 
+    select(!c(which(apply(., 2, var)==0))) %>% 
+    select(!c("quantity", "cdrp", "fcp", "fcq", "threshold", "rich")) %>% 
+    unique() %>% 
+    Rtsne(
+      X = .,
+      dims = 3,
+      perplexity = 420,
+      theta = 0.1,
+      max_iter = 2E3,
+      verbose = T,
+      pca_center = T,
+      pca_scale = T,
+      normalize = T,
+      eta = 200.0,
+      exaggeration_factor = 12.0,
+      num_threads = parallel::detectCores() - 2
+      )
+
+
+tsne_df %>% 
+  ungroup() %>% 
+  select(!where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold", "rich")) %>% 
+  unique() -> a
+
+tsne_df %>% 
+  ungroup() %>% 
+  select(!where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold")) %>% 
+  unique() -> b
+
+a_color <- b %>% 
+  slice(-c(526, 1308))
+
+setdiff(a, select(b, !rich))
+
+b %>% 
+  select(!rich) %>% 
+  duplicated() -> b_dup
+
+b_dup %>% which()
+
+b[b_dup, ] %>%
+  duplicated()
+  glimpse() 
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  ggplot() +
+    geom_point(aes(V1, V2, color = a_color$rich))
+
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  plot_ly(
+    title = "Sample title",
+    x = .$V1,
+    y = .$V2,
+    z = .$V3,
+    type = "scatter3d",
+    mode = "markers",
+    color = a_color$rich
+  ) %>% 
+  layout(title = "Experiment 29")
+```
+
