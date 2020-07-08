@@ -114,3 +114,266 @@ load_cdr <- function(file_names){
     }
     df
 }
+
+get_files_experiment <-
+  function(regexPattern){
+    # This function search for the expecified regexPattern and return the file names
+
+    files_experiment <-
+      list.files(
+        pattern = regexPattern,
+        recursive = TRUE,
+        ignore.case = TRUE,
+      )
+
+    files_experiment
+  }
+
+get_files_experiment_rafael <-
+  function(){
+    # set default search for rafael's experiments
+    files_experiment <-
+      get_files_experiment(".*rafael.*resultado.*csv$")
+
+    files_experiment
+  }
+
+get_files_experiment_carol <-
+  function(){
+    # set default search for carol's experiments
+    files_experiment <-
+      get_files_experiment(".*carolnovoattila.*csv$")
+
+    files_experiment
+  }
+
+get_files_experiment_thais <-
+  function(){
+    # set default search for thais's experiments
+    files_experiment <-
+      get_files_experiment(".*thais_.*csv$")
+
+    files_experiment
+  }
+
+
+load_cdr_carol <-
+  function(){
+    # set default load for carol's experiment
+
+    cdr <-
+      load_cdr(get_files_experiment_carol())
+    if (cdr_exist_store(cdr)) {
+      cdr <- cdr_retrieve(cdr)
+    } else {
+      cdr %>%
+        cdr_preprocess(experiment = "carol")
+    }
+
+    cdr
+  }
+
+load_cdr_rafael <-
+  function(){
+    # set default load for rafael's experiment
+
+    cdr <-
+      load_cdr(get_files_experiment_rafael())
+
+    if (cdr_exist_store(cdr)) {
+      cdr <- cdr_retrieve(cdr)
+    } else {
+      cdr %<>%
+        cdr_preprocess(experiment = "rafael")
+    }
+
+    cdr
+  }
+
+load_cdr_thais <-
+  function(){
+    # set default load for thais's experiment
+
+    cdr <-
+      load_cdr(get_files_experiment_thais())
+
+    if (cdr_exist_store(cdr)) {
+      cdr <- cdr_retrieve(cdr)
+    } else {
+      cdr %>%
+        cdr_preprocess(experiment = "thais")
+    }
+
+    cdr
+  }
+
+cdr_preprocess <-
+  function(cdr, experiment, store_cdr = TRUE, ...){
+    # do basic preprocessing in data passed
+    # this step is common to all experiments;
+    # 1) calculate fold-changes
+    # 2) calculate rich cdrs
+    #
+    # cdr: dataframe to preprocess.
+    # experiment: character, from which experiment is this dataset?
+    #             (current available experiments:
+    #             Thais;
+    #             Carol;
+    #             Rafael.)
+    # store_cdr: logical, store preprocessed dataframe in "binary" folder?
+    # ...: argumets passed to other functions.
+
+    # check if already exists a preproced dataframe in binary format
+
+    if (cdr_check_store(cdr)) {
+      cdr <- cdr_retrieve(cdr)
+    } else{
+      if (store_cdr) {
+        cdr_sha1 <- digest::sha1(cdr)
+      }
+      if (experiment == "rafael") {
+        cdr %<>%
+          mutate(
+            expgroup = case_when(
+              str_detect(file, "rafael") ~ "rafael",
+              TRUE ~ "unknown"),
+            cycle = case_when(
+              str_detect(file, "R0") ~ "R0",
+              str_detect(file, "R4") ~ "R4",
+              TRUE ~ "unknown"),
+            time = case_when(
+                str_detect(file, "Initial") ~ "initial",
+                str_detect(file, "Final") ~ "final",
+                TRUE ~ "unknown")) %>%
+          select(cdr3, cycle, time, expgroup, everything())
+      } else if (experiment == "thais") {
+        cdr %<>%
+          mutate(
+            expgroup = case_when(
+              str_detect(file, "thaisnovoheader") ~ "nh",
+              str_detect(file, "thais_29") ~ "29",
+              str_detect(file, "thais_66") ~ "66",
+              TRUE ~ "unknown"),
+            cycle = case_when(
+              str_detect(file, "R0_R2") ~ "R0_R2",
+              str_detect(file, "R0_R3") ~ "R0_R3",
+              str_detect(file, "R0_R4") ~ "R0_R4",
+              str_detect(file, "R2_R3") ~ "R2_R3",
+              str_detect(file, "R2_R4") ~ "R2_R4",
+              str_detect(file, "R3_R4") ~ "R3_R4",
+              TRUE ~ "unknown"),
+            time = case_when(
+                str_detect(file, "Initial") ~ "initial",
+                str_detect(file, "Final") ~ "final",
+                TRUE ~ "unknown")) %>%
+          select(cdr3, cycle, time, expgroup, everything())
+      } else if (experiment == "carol") {
+        cdr %<>%
+          mutate(
+            expgroup = case_when(
+              str_detect(file, "carol") ~ "carol",
+              TRUE ~ "unknown"),
+            cycle = case_when(
+              str_detect(file, "R3") ~ "R3",
+              str_detect(file, "R4") ~ "R4",
+              TRUE ~ "unknown"),
+            time = case_when(
+                str_detect(file, "Initial") ~ "initial",
+                str_detect(file, "Final") ~ "final",
+                TRUE ~ "unknown")) %>%
+          select(cdr3, cycle, time, expgroup, everything())
+      } else {
+        stop("This experiment is not yet implemented.")
+      }
+      cdr %<>%
+        group_by(cdr3, expgroup) %>%
+        arrange(cycle, desc(time), .by_group = TRUE) %>%
+        mutate(
+          fcp = cdrp / lag(cdrp, default = first(cdrp)),
+          fcq = quantity / lag(quantity, default = first(quantity))
+        ) %>%
+        select(cdr3:quantity, fcp, fcq, everything())
+
+      cdr %<>%
+        group_by(expgroup, cycle, time) %>%
+        arrange(desc(fcp)) %>%
+        slice_head(prop = .1) %>%
+        mutate(
+          threshold = mean(log10(fcp))) %>%
+        mutate(
+          rich = if_else(
+              (log10(fcp) >= threshold) &
+                # (time == "final") &
+                # (str_detect(cycle, "R0")),
+                (time == "final"),
+            "rich",
+            "medium")) %>%
+        full_join(cdr) %>%
+        mutate(
+          rich = if_else(
+            is.na(rich),
+            "poor",
+            rich)) %>%
+        mutate(
+          rich = factor(rich,
+                        levels = c("rich", "medium", "poor"))) %>%
+        mutate(
+          threshold = if_else(
+            is.na(threshold),
+            0,
+            threshold))
+
+      if (store_cdr) {
+        write_rds(cdr, file.path(data_path_binary, cdr_sha1))
+      }
+    }
+
+    cdr
+  }
+
+cdr_exist_store <- function(cdr){
+  # check if there already exists this same dataframe as binary format
+  # this avoid desnecessary preprocess steps
+
+  cdr_sha1 <- digest::sha1(cdr)
+  cdr_path <- file.path(data_path_binary, cdr_sha1)
+
+  if (file.exists(cdr_path)){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+cdr_store <- function(cdr, overwrite = TRUE){
+  # this function save the preproced dataframe as a RDS binary.
+  # preprocess steps can take a considerable amount of time,
+  # and, since they do not change (or, at least, it's not common
+  # to change), makes sense to store de dataframe as a binary.
+  #
+  # this funcition is by default active in the cdr_preprocess
+  # function.
+
+  cdr_sha1 <-
+    digest::sha1(cdr)
+
+  # store the preproced dataframe in "binary" folder
+  if (overwrite) {
+    write_rds(cdr, file.path(data_path_binary, cdr_sha1))
+  }
+
+}
+
+cdr_retrieve <- function(cdr) {
+  # this function loads an already existing cdr dataframe
+
+  cdr_path <-
+    file.path(
+      data_path_binary,
+      digest::sha1(cdr))
+
+  cdr <-
+    read_rds(cdr_path)
+
+  cdr
+}
