@@ -1,0 +1,355 @@
+---
+title: "Análise exploratória de sequências CDR3"
+subtitle: "Tentativa de clusterizar os dados - Experimento Rafael"
+author: "Matheus Cardoso"
+date: "Jun 30, 2020"
+output:
+  html_document:
+    fig_caption: yes
+    highlight: zenburn
+    keep_md: yes
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup_knit, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Processamento dos dados
+
+```{r setup_env}
+source("./load_files.R")
+```
+
+```{r select_files}
+data_files_selected <- 
+  list.files(
+    pattern = ".*rafael.*resultado.*csv$",
+    recursive = TRUE,
+    ignore.case = TRUE
+    )
+
+data_files_and_size <- 
+  sapply(data_files_selected, file.size)
+
+files_to_include_in_dataframe <- 
+  tibble(
+    "Files" = names(data_files_and_size),
+    "Size (in MB)" = data_files_and_size/1E6
+   )
+
+skimr::skim(files_to_include_in_dataframe)
+```
+
+```{r load_data}
+cdr <- load_cdr(names(data_files_and_size))
+
+cdr %<>% 
+  mutate(
+    expgroup = case_when(
+      str_detect(file, "rafael") ~ "rafael",
+      TRUE ~ "unknown"),
+    cycle = case_when(
+      str_detect(file, "R0") ~ "R0",
+      str_detect(file, "R4") ~ "R4",
+      TRUE ~ "unknown"),
+    time = case_when(
+        str_detect(file, "Initial") ~ "initial",
+        str_detect(file, "Final") ~ "final",
+        TRUE ~ "unknown")) %>% 
+  select(cdr3, cycle, time, expgroup, everything())
+
+cdr %<>% 
+  group_by(cdr3, expgroup) %>% 
+  arrange(cycle, desc(time), .by_group = TRUE) %>% 
+  mutate(
+    fcp = cdrp / lag(cdrp, default = first(cdrp)),
+    fcq = quantity / lag(quantity, default = first(quantity))
+  ) %>% 
+  select(cdr3:quantity, fcp, fcq, everything())
+```
+
+```{r select_enriched_sequences}
+cdr %>% 
+  filter(time == "final") %>% 
+  group_by(expgroup, cycle, time) %>% 
+  arrange(desc(fcp)) %>% 
+  slice_head(prop = .1) %>% 
+  # slice_head(n = 1000) %>% 
+  ggplot(aes(expgroup, log10(fcp))) +
+    geom_violin(aes(fill = expgroup, color = expgroup), alpha = 0.5) +
+    geom_jitter(aes(shape = expgroup), alpha = 0.6, size = 1) +
+    stat_summary(
+      fun = mean,
+      fun.min = mean,
+      fun.max = mean,
+      geom = "crossbar",
+      # width = 0.5,
+      aes(color = expgroup)
+    ) +
+    facet_grid(. ~ cycle)
+
+# cdr %>% 
+#   filter(str_detect(cycle, "R0")) %>% 
+#   filter(time == "final") %>% 
+#   group_by(expgroup, cycle, time) %>% 
+#   arrange(desc(fcp)) %>% 
+#   slice_head(n = 1000) %>% 
+#   ggplot(aes(fcp, color = expgroup, fill = expgroup)) +
+#     geom_density(stat = "bin", alpha = 0.3) +
+#     facet_grid(cycle ~ expgroup)
+
+cdr %<>% 
+  group_by(expgroup, cycle, time) %>% 
+  arrange(desc(fcp)) %>% 
+  slice_head(prop = .1) %>% 
+  mutate(
+    threshold = mean(log10(fcp))
+    ) %>% 
+  mutate(
+    rich = if_else(
+        (log10(fcp) >= threshold) &
+          # (time == "final") &
+          # (str_detect(cycle, "R0")),
+          (time == "final"),
+      "rich",
+      "medium")) %>% 
+  full_join(cdr) %>% 
+  mutate(
+    rich = if_else(
+      is.na(rich),
+      "poor",
+      rich)) %>% 
+  mutate(
+    rich = factor(rich,
+                  levels = c("rich", "medium", "poor"))
+    ) %>% 
+  mutate(
+    threshold = if_else(
+      is.na(threshold),
+      0,
+      threshold
+    )
+  )
+
+cdr %>% 
+  filter(rich == "rich") %>%
+  ggplot() +
+    geom_violin(aes(expgroup, log10(fcp), fill = expgroup)) +
+    geom_jitter(aes(expgroup, log10(fcp), shape = expgroup), alpha = .2) +
+    facet_grid(rich ~ cycle)
+
+cdr %>% 
+  filter(!rich == "rich") %>%
+  ggplot() +
+    geom_violin(aes(expgroup, log10(fcp), fill = expgroup)) +
+    geom_jitter(aes(expgroup, log10(fcp), shape = expgroup), alpha = .2) +
+    facet_grid(rich ~ cycle)
+```
+
+```{r}
+names(cdr)
+
+cdr %>% 
+  ggplot() +
+    geom_density(aes(AV, color = rich)) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  ggplot() +
+    geom_density(aes(MW, color = rich)) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  ggplot() +
+    geom_density(aes(gravy, color = rich)) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  ggplot() +
+    geom_density(aes(SSF_Turn, color = rich)) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  ggplot() +
+    geom_density(aes(IP, color = rich)) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  ggplot() +
+    geom_density(aes(flex, color = rich)) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  ggplot(aes(cycle, MW)) +
+    geom_violin(aes(fill = rich)) +
+    geom_jitter(alpha = .1) +
+    facet_grid(rich ~ cycle)
+
+cdr %>% 
+  filter(rich == "rich") %>% 
+  ungroup() %>% 
+  select(cdr3:SSF_Sheet & !c("cycle", "time", "expgroup")) -> rich66
+
+rich66
+
+names(cdr)
+
+cdr %>% 
+  filter(cycle == "R4") %>% 
+  ggplot() +
+  geom_violin(aes(rich, gravy, color = rich)) +
+  geom_jitter(aes(rich, gravy), alpha = .1)
+```
+
+# Tentativa de Clusterização
+
+## Clusterization with Quantity and Prevalence variables
+
+```{r analyse_cdr_rich_with_quantity}
+library(Rtsne)
+
+set.seed(42)
+tsne_df <- cdr %>% 
+  filter(time == "final") %>% 
+  filter(cycle == "R4")
+
+
+tsne_df %>% 
+  summarise(across(everything(), ~ all(sum(is.na(.x))))) %>% 
+  select(where(isTRUE))
+
+tsne_df %>% 
+  filter(is.na(threshold)) %>% 
+  select(rich, threshold, quantity)
+
+set.seed(42)
+tsne_out <- 
+  tsne_df %>% 
+    ungroup() %>% 
+    select(!where(is.character)) %>% 
+    select(!c(which(apply(., 2, var)==0))) %>% 
+    unique() %>% 
+    Rtsne(
+      X = .,
+      dims = 3,
+      perplexity = 30,
+      theta = 0.5,
+      max_iter = 1E3,
+      verbose = T,
+      pca_center = T,
+      pca_scale = T,
+      # partial_pca = T,
+      normalize = T,
+      eta = 200.0,
+      exaggeration_factor = 12.0,
+      num_threads = parallel::detectCores()
+      )
+
+
+tsne_df %>% 
+  ungroup() %>% 
+  select(!where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  unique() -> a
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  ggplot() +
+    geom_point(aes(V1, V2, color = a$rich))
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  plot_ly(
+    title = "Sample title",
+    x = .$V1,
+    y = .$V2,
+    z = .$V3,
+    type = "scatter3d",
+    mode = "markers",
+    color = a$rich
+  ) %>% 
+  layout(title = "With Quantity Variables")
+
+```
+
+## Clusterization only with Biochemistry Properties
+
+```{r biochemistry_clustering_experiment}
+library(Rtsne)
+
+set.seed(42)
+tsne_df <- cdr %>% 
+  filter(time == "final") %>% 
+  filter(cycle == "R4")
+
+tsne_df %>% 
+  summarise(across(everything(), ~ all(sum(is.na(.x))))) %>% 
+  select(where(isTRUE))
+
+tsne_df %>% 
+  filter(is.na(threshold)) %>% 
+  select(rich, threshold, quantity)
+
+set.seed(42)
+tsne_out <- 
+  tsne_df %>% 
+    ungroup() %>% 
+    select(cdr3, !where(is.character)) %>% 
+    select(!c(which(apply(., 2, var)==0))) %>% 
+    select(!c("quantity", "cdrp", "fcp", "fcq", "rich", "threshold")) %>% 
+    mutate(cdr3 = as.factor(cdr3)) %>% 
+    Rtsne(
+      X = .,
+      dims = 3,
+      perplexity = 30,
+      theta = 0.5,
+      max_iter = 1E3,
+      verbose = T,
+      pca_center = T,
+      pca_scale = T,
+      normalize = T,
+      partial_pca = T,
+      eta = 200.0,
+      exaggeration_factor = 12.0,
+      num_threads = parallel::detectCores()
+      )
+
+tsne_df %>% 
+  ungroup() %>% 
+  select(cdr3, !where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold")) -> a
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  ggplot() +
+    geom_point(aes(V1, V2, color = a$rich))
+
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  plot_ly(
+    x = .$V1,
+    y = .$V2,
+    z = .$V3,
+    type = "scatter3d",
+    mode = "markers",
+    color = a$rich
+  ) %>% 
+  layout(title = "Without Quantity Variables")
+
+```
