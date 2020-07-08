@@ -1,6 +1,6 @@
 ---
 title: "Análise exploratória de sequências CDR3"
-subtitle: "Tentativa de clusterizar os dados"
+subtitle: "Tentativa de clusterizar os dados - Experimento Thais"
 author: "Matheus Cardoso"
 date: "Jun 30, 2020"
 output:
@@ -163,9 +163,45 @@ cdr %>%
     facet_grid(rich ~ cycle)
 ```
 
+```{r}
+names(cdr)
+
+cdr %>% 
+  filter(rich == "rich") %>% 
+  filter(expgroup == "29" & cycle == "R0_R4") %>% 
+  ungroup() %>% 
+  select(cdr3:SSF_Sheet & !c("cycle", "time", "expgroup"))
+
+cdr %>% 
+  filter(rich == "poor") %>% 
+  filter(expgroup == "66" & cycle == "R0_R4") %>% 
+  ungroup() %>% 
+  select(cdr3:SSF_Sheet & !c("cycle", "time", "expgroup")) %>% 
+  ggplot() +
+  geom_density(aes(MW))
+
+cdr %>% 
+  filter(rich == "rich") %>% 
+  filter(expgroup == "66" & cycle == "R0_R4") %>% 
+  ungroup() %>% 
+  select(cdr3:SSF_Sheet & !c("cycle", "time", "expgroup")) -> rich66
+
+rich66
+
+names(cdr)
+
+cdr %>% 
+  filter(expgroup == "66" & cycle == "R0_R4") %>% 
+  ggplot() +
+  geom_violin(aes(rich, gravy, color = rich)) +
+  geom_jitter(aes(rich, gravy), alpha = .1)
+```
+
 # Tentativa de Clusterização
 
-## Clusterização Experimento 29
+## Clusterization with Quantity and Prevalence variables
+
+### Clusterização Experimento 29
 
 ```{r analyse_cdr_rich_29}
 library(Rtsne)
@@ -220,21 +256,6 @@ tsne_out %>%
   ggplot() +
     geom_point(aes(V1, V2, color = a$rich))
 
-
-tsne_out %>% 
-  .$Y %>% 
-  as_tibble() %>% 
-  plot_ly(
-    title = "Sample title",
-    x = .$V1,
-    y = .$V2,
-    z = .$V3,
-    type = "scatter3d",
-    mode = "markers",
-    color = a$rich
-  ) %>% 
-  layout(title = "Experiment 29")
-
 tsne_out %>% 
   .$Y %>% 
   as_tibble() %>% 
@@ -251,7 +272,7 @@ tsne_out %>%
 
 ```
 
-## Clusterização Experimento 66
+### Clusterização Experimento 66
 
 ```{r analyse_cdr_rich_66}
 library(Rtsne)
@@ -321,9 +342,11 @@ tsne_out %>%
   layout(title = "Experiment 66")
 ```
 
-## clusterizarion_with_only_biochemistry_characteristics
+## Clusterization only with Biochemistry Properties
 
-```{r clusterizarion_with_only_biochemistry_characteristics}
+### Experiment 29
+
+```{r biochemistry_clustering_experiment_29}
 library(Rtsne)
 set.seed(42)
 
@@ -345,74 +368,126 @@ set.seed(42)
 tsne_out <- 
   tsne_df %>% 
     ungroup() %>% 
-    select(!where(is.character)) %>% 
+    select(cdr3, !where(is.character)) %>% 
     select(!c(which(apply(., 2, var)==0))) %>% 
-    select(!c("quantity", "cdrp", "fcp", "fcq", "threshold", "rich")) %>% 
+    select(!c("quantity", "cdrp", "fcp", "fcq", "rich", "threshold")) %>% 
     unique() %>% 
+    mutate(cdr3 = as.factor(cdr3)) %>% 
     Rtsne(
       X = .,
       dims = 3,
-      perplexity = 420,
-      theta = 0.1,
+      perplexity = 30,
+      theta = 0.5,
       max_iter = 2E3,
       verbose = T,
       pca_center = T,
       pca_scale = T,
       normalize = T,
+      partial_pca = T,
       eta = 200.0,
       exaggeration_factor = 12.0,
       num_threads = parallel::detectCores() - 2
       )
 
-
 tsne_df %>% 
   ungroup() %>% 
-  select(!where(is.character)) %>% 
-  select(!c(which(apply(., 2, var)==0))) %>% 
-  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold", "rich")) %>% 
-  unique() -> a
-
-tsne_df %>% 
-  ungroup() %>% 
-  select(!where(is.character)) %>% 
+  select(cdr3, !where(is.character)) %>% 
   select(!c(which(apply(., 2, var)==0))) %>% 
   select(!c("quantity", "cdrp", "fcp", "fcq", "threshold")) %>% 
-  unique() -> b
-
-a_color <- b %>% 
-  slice(-c(526, 1308))
-
-setdiff(a, select(b, !rich))
-
-b %>% 
-  select(!rich) %>% 
-  duplicated() -> b_dup
-
-b_dup %>% which()
-
-b[b_dup, ] %>%
-  duplicated()
-  glimpse() 
+  unique() -> a
 
 tsne_out %>% 
   .$Y %>% 
   as_tibble() %>% 
   ggplot() +
-    geom_point(aes(V1, V2, color = a_color$rich))
+    geom_point(aes(V1, V2, color = a$rich))
 
 
 tsne_out %>% 
   .$Y %>% 
   as_tibble() %>% 
   plot_ly(
-    title = "Sample title",
     x = .$V1,
     y = .$V2,
     z = .$V3,
     type = "scatter3d",
     mode = "markers",
-    color = a_color$rich
+    color = a$rich
   ) %>% 
   layout(title = "Experiment 29")
+
 ```
 
+### Experiment 66
+
+```{r biochemistry_clustering_experiment_66}
+library(Rtsne)
+set.seed(42)
+
+tsne_df <- cdr %>% 
+  # filter(!rich == "poor") %>%
+  filter(time == "final") %>% 
+  filter(cycle == "R0_R4") %>% 
+  filter(expgroup == "66")
+
+tsne_df %>% 
+  summarise(across(everything(), ~ all(sum(is.na(.x))))) %>% 
+  select(where(isTRUE))
+
+tsne_df %>% 
+  filter(is.na(threshold)) %>% 
+  select(rich, threshold, quantity)
+
+set.seed(42)
+tsne_out <- 
+  tsne_df %>% 
+    ungroup() %>% 
+    select(cdr3, !where(is.character)) %>% 
+    select(!c(which(apply(., 2, var)==0))) %>% 
+    select(!c("quantity", "cdrp", "fcp", "fcq", "rich", "threshold")) %>% 
+    unique() %>% 
+    mutate(cdr3 = as.factor(cdr3)) %>% 
+    Rtsne(
+      X = .,
+      dims = 3,
+      perplexity = 30,
+      theta = 0.5,
+      max_iter = 2E3,
+      verbose = T,
+      pca_center = T,
+      pca_scale = T,
+      normalize = T,
+      partial_pca = T,
+      eta = 200.0,
+      exaggeration_factor = 12.0,
+      num_threads = parallel::detectCores() - 2
+      )
+
+tsne_df %>% 
+  ungroup() %>% 
+  select(cdr3, !where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold")) %>% 
+  unique() -> a
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  ggplot() +
+    geom_point(aes(V1, V2, color = a$rich))
+
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  plot_ly(
+    x = .$V1,
+    y = .$V2,
+    z = .$V3,
+    type = "scatter3d",
+    mode = "markers",
+    color = a$rich
+  ) %>% 
+  layout(title = "Experiment 66")
+
+```
