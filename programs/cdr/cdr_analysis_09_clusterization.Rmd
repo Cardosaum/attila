@@ -1,0 +1,394 @@
+---
+title: "Análise exploratória de sequências CDR3"
+subtitle: "Comparison Between Rich CDR3 Sequences in Thais, Rafael and Carol's experiments."
+author: "Matheus Cardoso"
+date: "Jul 08, 2020"
+output:
+  html_document:
+    fig_caption: yes
+    highlight: zenburn
+    keep_md: yes
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup_knit, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r setup_env}
+source("./load_files.R")
+```
+
+# Load and Process data
+
+```{r load_files}
+rafael <-
+  load_cdr_rafael() %>% 
+  filter(rich == "rich")
+
+thais <- 
+  load_cdr_thais() %>% 
+  filter(rich == "rich")
+
+carol <- 
+  load_cdr_carol() %>% 
+  filter(rich == "rich")
+
+cdr <- 
+  full_join(rafael, thais) %>% 
+  full_join(carol)
+
+glimpse(cdr)
+```
+
+# Clustering Methods
+
+## PCA
+
+```{r pca}
+library(tidytext)
+
+set.seed(42)
+pca_rec <- 
+  recipe( ~ ., data = cdr) %>% 
+  step_rm(file, time, threshold, rich) %>% 
+  step_rm(quantity, cdrp, fcp, fcq) %>% 
+  update_role(all_nominal(), new_role = "id") %>% 
+  step_string2factor(all_nominal()) %>%
+  step_nzv(all_numeric()) %>% 
+  step_corr(all_numeric()) %>% 
+  step_normalize(all_predictors()) %>% 
+  step_pca(all_predictors())
+
+pca_prep <- prep(pca_rec)
+
+pca_prep
+
+juice(pca_prep) %>% 
+  ggplot(aes(PC1, PC2, label = cdr3)) +
+  geom_point(aes(color = expgroup)) +
+  geom_text(check_overlap = T, hjust = "inward", family = "IBMPlexSans") +
+  labs(color = NULL)
+
+library(plotly)
+juice(pca_prep) %>% 
+  plot_ly(
+    x = .$PC1,
+    y = .$PC2,
+    z = .$PC3,
+    type = "scatter3d",
+    mode = "markers",
+    color = .$expgroup
+  )
+# clean data
+rm(pca_prep, pca_rec)
+```
+
+## KPCA Poly
+
+```{r kpca_poly}
+library(tidytext)
+
+set.seed(42)
+kpca_poly_prep <- 
+  recipe( ~ ., data = cdr) %>% 
+  step_rm(file, time, threshold, rich) %>% 
+  step_rm(quantity, cdrp, fcp, fcq) %>% 
+  update_role(all_nominal(), new_role = "id") %>% 
+  step_string2factor(all_nominal()) %>%
+  step_nzv(all_numeric()) %>% 
+  step_corr(all_numeric()) %>% 
+  step_normalize(all_predictors()) %>% 
+  step_kpca_poly(all_predictors())
+
+kpca_poly_prep <- prep(kpca_poly_prep)
+
+kpca_poly_prep
+juice(kpca_poly_prep)
+
+juice(kpca_poly_prep) %>% 
+  ggplot(aes(kPC1, kPC2, label = cdr3)) +
+  geom_point(aes(color = expgroup)) +
+  geom_text(check_overlap = T, hjust = "inward", family = "IBMPlexSans") +
+  labs(color = NULL)
+
+library(plotly)
+juice(kpca_poly_prep) %>% 
+  plot_ly(
+    x = .$kPC1,
+    y = .$kPC2,
+    z = .$kPC3,
+    type = "scatter3d",
+    mode = "markers",
+    color = .$expgroup
+  )
+# clean data
+rm(kpca_poly_prep, kpca_rec)
+```
+
+## KPCA RBF
+
+```{r kpca_rbf}
+library(tidytext)
+
+set.seed(42)
+kpca_rbf_prep <- 
+  recipe( ~ ., data = cdr) %>% 
+  step_rm(file, time, threshold, rich) %>% 
+  step_rm(quantity, cdrp, fcp, fcq) %>% 
+  update_role(all_nominal(), new_role = "id") %>% 
+  step_string2factor(all_nominal()) %>%
+  step_nzv(all_numeric()) %>% 
+  step_corr(all_numeric()) %>% 
+  step_normalize(all_predictors()) %>% 
+  step_kpca_rbf(all_predictors())
+
+kpca_rbf_prep <- prep(kpca_rbf_prep)
+
+kpca_rbf_prep
+juice(kpca_rbf_prep)
+
+juice(kpca_rbf_prep) %>% 
+  ggplot(aes(kPC1, kPC2, label = cdr3)) +
+  geom_point(aes(color = expgroup)) +
+  geom_text(check_overlap = T, hjust = "inward", family = "IBMPlexSans") +
+  labs(color = NULL)
+
+library(plotly)
+juice(kpca_rbf_prep) %>% 
+  plot_ly(
+    x = .$kPC1,
+    y = .$kPC2,
+    z = .$kPC3,
+    type = "scatter3d",
+    mode = "markers",
+    color = .$expgroup
+  )
+
+# clean data
+rm(kpca_rbf_prep, kpca_rec)
+```
+
+## ICA
+
+```{r ica}
+library(tidytext)
+
+set.seed(42)
+ica_rec <- 
+  recipe( ~ ., data = cdr) %>% 
+  step_rm(file, time, threshold, rich) %>% 
+  step_rm(quantity, cdrp, fcp, fcq) %>% 
+  update_role(all_nominal(), new_role = "id") %>% 
+  step_string2factor(all_nominal()) %>%
+  step_nzv(all_numeric()) %>% 
+  step_corr(all_numeric()) %>% 
+  step_normalize(all_predictors()) %>% 
+  step_ica(all_predictors())
+
+ica_prep <- prep(ica_rec)
+
+ica_prep
+juice(ica_prep)
+
+juice(ica_prep) %>% 
+  ggplot(aes(IC1, IC2, label = cdr3)) +
+  geom_point(aes(color = expgroup)) +
+  geom_text(check_overlap = T, hjust = "inward", family = "IBMPlexSans") +
+  labs(color = NULL)
+
+library(plotly)
+juice(ica_prep) %>% 
+  plot_ly(
+    x = .$IC1,
+    y = .$IC2,
+    z = .$IC3,
+    type = "scatter3d",
+    mode = "markers",
+    color = .$expgroup
+  )
+
+# clean data
+rm(ica_prep, ica_rec)
+```
+
+## UMAP
+
+```{r umap}
+library(embed)
+
+set.seed(42)
+umap_rec <- 
+  recipe( ~ ., data = cdr) %>% 
+  step_rm(file, time, threshold, rich) %>% 
+  step_rm(quantity, cdrp, fcp, fcq) %>% 
+  update_role(all_nominal(), new_role = "id") %>% 
+  step_string2factor(all_nominal()) %>%
+  step_nzv(all_numeric()) %>% 
+  step_corr(all_numeric()) %>% 
+  step_normalize(all_predictors()) %>% 
+  step_umap(all_predictors(), num_comp = 3,
+            options = list(
+              verbose = T,
+              n_threads = parallel::detectCores()
+            ))
+
+umap_prep <- prep(umap_rec)
+
+umap_prep
+
+juice(umap_prep) %>% 
+  ggplot(aes(umap_1, umap_2, label = cdr3)) +
+  geom_point(aes(color = expgroup)) +
+  geom_text(check_overlap = T, hjust = "inward", family = "IBMPlexSans") +
+  labs(color = NULL)
+
+library(plotly)
+juice(umap_prep) %>% 
+  plot_ly(
+    x = .$umap_1,
+    y = .$umap_2,
+    z = .$umap_3,
+    type = "scatter3d",
+    mode = "markers",
+    color = .$expgroup
+  )
+# clean data
+rm(umap_prep, umap_rec)
+```
+
+## T-sne
+
+### Comparison Between Groups
+
+```{r tsne_with_groups}
+library(Rtsne)
+
+tsne_df <-
+  cdr %>% 
+  ungroup() %>% 
+  select(cdr3, expgroup, cycle, !where(is.character)) %>%
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "rich", "threshold")) %>% 
+  mutate(across(where(is.character), as.factor))
+
+set.seed(42)
+tsne_out <- 
+  tsne_df %>% 
+  unique() %>% 
+    Rtsne(
+      X = .,
+      dims = 3,
+      perplexity = 30,
+      theta = 0.5,
+      max_iter = 1E3,
+      verbose = T,
+      pca_center = T,
+      pca_scale = T,
+      normalize = T,
+      partial_pca = T,
+      eta = 200.0,
+      exaggeration_factor = 12.0,
+      num_threads = parallel::detectCores()
+      )
+
+cdr %>% 
+  ungroup() %>% 
+  select(cdr3, expgroup, cycle, rich, !where(is.character)) %>%
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold")) -> a
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  ggplot() +
+    geom_point(aes(V1, V2, color = a$expgroup))
+
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  plot_ly(
+    x = .$V1,
+    y = .$V2,
+    z = .$V3,
+    type = "scatter3d",
+    mode = "markers",
+    color = a$expgroup
+  ) %>% 
+  layout(title = "Comparison Between Experiments")
+
+```
+
+### Without Groups
+
+```{r tsne_without_groups}
+library(Rtsne)
+
+tsne_df <-
+  cdr %>% 
+  ungroup() %>% 
+  select(!where(is.character)) %>% 
+  # select(cdr3, expgroup, cycle, !where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "rich", "threshold")) %>% 
+  mutate(across(where(is.character), as.factor))
+
+set.seed(42)
+tsne_out <- 
+  tsne_df %>% 
+  unique() %>% 
+    Rtsne(
+      X = .,
+      dims = 3,
+      perplexity = 30,
+      theta = 0.5,
+      max_iter = 1E3,
+      verbose = T,
+      pca_center = T,
+      pca_scale = T,
+      normalize = T,
+      # partial_pca = T,
+      eta = 200.0,
+      exaggeration_factor = 12.0,
+      num_threads = parallel::detectCores()
+      )
+
+cdr %>% 
+  ungroup() %>% 
+  select(!where(is.character)) %>% 
+  # select(cdr3, expgroup, cycle, rich, !where(is.character)) %>% 
+  select(!c(which(apply(., 2, var)==0))) %>% 
+  select(!c("quantity", "cdrp", "fcp", "fcq", "threshold")) -> a
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  ggplot() +
+    geom_point(aes(V1, V2, color = a$expgroup))
+
+
+tsne_out %>% 
+  .$Y %>% 
+  as_tibble() %>% 
+  plot_ly(
+    x = .$V1,
+    y = .$V2,
+    z = .$V3,
+    type = "scatter3d",
+    mode = "markers",
+    color = I("blue"),
+    alpha = .1
+  ) %>% 
+  layout(title = "All experiments together")
+
+```

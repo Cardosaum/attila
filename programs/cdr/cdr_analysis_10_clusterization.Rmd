@@ -1,0 +1,235 @@
+---
+title: "Análise exploratória de sequências CDR3"
+subtitle: "Comparison Between Rich CDR3 Sequences in Thais, Rafael and Carol's experiments."
+author: "Matheus Cardoso"
+date: "Jul 08, 2020"
+output:
+  html_document:
+    fig_caption: yes
+    highlight: zenburn
+    keep_md: yes
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup_knit, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r setup_env}
+source("./load_files.R")
+```
+
+# Load and Process data
+
+```{r load_files}
+rafael <-
+  load_cdr_rafael() %>% 
+  filter(rich == "rich")
+
+thais <- 
+  load_cdr_thais() %>% 
+  filter(rich == "rich")
+
+carol <- 
+  load_cdr_carol() %>% 
+  filter(rich == "rich")
+
+cdr <- 
+  full_join(rafael, thais) %>% 
+  full_join(carol)
+
+cdr %<>%
+  mutate(
+    cycle = case_when(
+      str_detect(cycle, "^R4$") ~ "R0_R4",
+      TRUE ~ cycle
+    )
+  )
+
+glimpse(cdr)
+```
+
+# Comparison between variables across all experiments
+
+```{r density_plots_pdf}
+cdr_col <-
+  cdr %>% 
+  ungroup() %>% 
+  select(MW:negative) %>% 
+  names()
+
+plot_list <- list()
+for (i in cdr_col) {
+  tmp_plot <- 
+    cdr %>% 
+      ggplot(aes(.data[[i]], color = expgroup)) +
+      geom_density() +
+      facet_grid(cycle ~ .)
+  plot_list[[i]] <- tmp_plot
+}
+
+pdf("density_plots.pdf")
+for (i in plot_list) {
+  print(i)
+}
+dev.off()
+
+```
+
+```{r boxplot_pdf}
+cdr_col <-
+  cdr %>% 
+  ungroup() %>% 
+  select(MW:negative) %>% 
+  names()
+
+plot_list <- list()
+for (i in cdr_col) {
+  tmp_plot <- 
+    cdr %>% 
+      filter(cycle == "R0_R4") %>% 
+      ggplot(aes(expgroup, .data[[i]], fill = expgroup)) +
+      geom_boxplot() +
+      facet_grid(cycle ~ .)
+  plot_list[[i]] <- tmp_plot
+}
+
+pdf("boxplot_plots.pdf")
+for (i in plot_list) {
+  print(i)
+}
+dev.off()
+
+```
+
+```{r violin_pdf}
+cdr_col <-
+  cdr %>% 
+  ungroup() %>% 
+  select(MW:negative) %>% 
+  names()
+
+plot_list <- list()
+for (i in cdr_col) {
+  tmp_plot <- 
+    cdr %>% 
+      filter(cycle == "R0_R4") %>% 
+      ggplot(aes(expgroup, .data[[i]], fill = expgroup)) +
+      geom_violin() +
+      geom_point(alpha = 0.05) +
+      facet_grid(cycle ~ .)
+  plot_list[[i]] <- tmp_plot
+}
+
+pdf("violin_plots.pdf")
+for (i in plot_list) {
+  print(i)
+}
+dev.off()
+
+```
+
+```{r permutation_pair_plot}
+cdr_pairs <- combn(cdr_col, 2) %>% as_tibble()
+
+cdr_pair_plot_df <- 
+  cdr %>% 
+  filter(cycle == "R0_R4")
+
+plot_list <- list()
+for (i in cdr_pairs) {
+  x_axis <- i[[1]]
+  y_axis <- i[[2]]
+  
+  tmp_plot <- 
+    cdr_pair_plot_df %>%
+    ggplot(aes(
+      .data[[x_axis]],
+      .data[[y_axis]],
+      color = expgroup)) +
+    geom_point(alpha = .3) +
+    geom_smooth(alpha = .3, size = .5) +
+    theme(
+      axis.text.x = element_text(angle = 45)
+    ) +
+    facet_grid(expgroup ~ .)
+  
+  plot_list[[paste0(x_axis, "-", y_axis)]] <- tmp_plot
+}
+
+pdf("pair_plots.pdf")
+for (i in plot_list) {
+  print(i)
+}
+dev.off()
+
+```
+
+
+```{r}
+cdr %>% 
+  filter(cycle == "R0_R4") %>%
+  ggplot(aes(expgroup, AV, fill = expgroup)) +
+    geom_violin() +
+    geom_jitter(alpha = 0.05) +
+    facet_grid(cycle ~ .)
+
+cdr %>% 
+  filter(cycle == "R0_R4") %>%
+  ggplot(aes(AV, flex, color = expgroup)) +
+    geom_point(alpha = .3) +
+    geom_smooth(alpha = .3, size = .5) +
+    facet_grid(expgroup ~ .)
+
+cdr %>% 
+  filter(cycle == "R0_R4") %>%
+  ungroup() %>% 
+  select(expgroup, MW:IP) %>% 
+  GGally::ggpairs(
+    mapping = aes(color = expgroup),
+    upper = list(continuous = wrap("density", alpha = 0.4), combo = "box_no_facet"),
+    diag = list(discrete = "barDiag", continuous = wrap("densityDiag", alpha = 0.3)),
+    lower = list(continuous = wrap("points", alpha = 0.2), combo = wrap("dot_no_facet", alpha = 0.4))) %>% 
+  GGally::print_if_interactive()
+
+cdr %>% 
+  ungroup() %>% 
+  select(expgroup, flex:gravy) %>% 
+  GGally::ggpairs(
+    mapping = aes(color = expgroup),
+    upper = list(continuous = wrap("density", alpha = 0.4), combo = "box_no_facet"),
+    diag = list(discrete = "barDiag", continuous = wrap("densityDiag", alpha = 0.3)),
+    lower = list(continuous = wrap("points", alpha = 0.2), combo = wrap("dot_no_facet", alpha = 0.4))) %>% 
+  GGally::print_if_interactive()
+
+cdr %>% 
+  ungroup() %>% 
+  select(expgroup, SSF_Helix:SSF_Sheet) %>% 
+  GGally::ggpairs(
+    mapping = aes(color = expgroup),
+    upper = list(continuous = wrap("density", alpha = 0.4), combo = "box_no_facet"),
+    diag = list(discrete = "barDiag", continuous = wrap("densityDiag", alpha = 0.3)),
+    lower = list(continuous = wrap("points", alpha = 0.2), combo = wrap("dot_no_facet", alpha = 0.4))) %>% 
+  GGally::print_if_interactive()
+
+cdr %>% 
+  ungroup() %>% 
+  select(expgroup, aliphatic:negative) %>% 
+  GGally::ggpairs(
+    mapping = aes(color = expgroup),
+    upper = list(continuous = wrap("density", alpha = 0.4), combo = "box_no_facet"),
+    diag = list(discrete = "barDiag", continuous = wrap("densityDiag", alpha = 0.3)),
+    lower = list(continuous = wrap("points", alpha = 0.2), combo = wrap("dot_no_facet", alpha = 0.4))) %>% 
+  GGally::print_if_interactive()
+
+
+```
