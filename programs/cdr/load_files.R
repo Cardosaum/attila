@@ -225,7 +225,7 @@ cdr_preprocess <-
 
     # check if already exists a preproced dataframe in binary format
 
-    if (cdr_check_store(cdr)) {
+    if (cdr_exist_store(cdr)) {
       cdr <- cdr_retrieve(cdr)
     } else{
       if (store_cdr) {
@@ -251,8 +251,8 @@ cdr_preprocess <-
           mutate(
             expgroup = case_when(
               str_detect(file, "thaisnovoheader") ~ "nh",
-              str_detect(file, "thais_29") ~ "29",
-              str_detect(file, "thais_66") ~ "66",
+              str_detect(file, "thais_29") ~ "thais_29",
+              str_detect(file, "thais_66") ~ "thais_66",
               TRUE ~ "unknown"),
             cycle = case_when(
               str_detect(file, "R0_R2") ~ "R0_R2",
