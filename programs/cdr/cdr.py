@@ -1,5 +1,6 @@
 '''
-cdr.py - Analyze an "aafreq.txt" input file and return all features of CDR3 sequences
+cdr.py - Analyze an "aafreq.txt" input file and
+         return all features of CDR3 sequences
 
 Usage:
        python3 cdr.py <INPUT_FILE> <OUTPUT_DIRECTORY>
@@ -12,7 +13,6 @@ License:  Apache 2.0  <https://www.apache.org/licenses/LICENSE-2.0>
 
 import re
 import sys
-import os
 import timeit
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import logging
@@ -28,6 +28,7 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
+
 def extract_cdr3(file):
     '''
     Read all input file and retur a dictionary in format:
@@ -36,10 +37,10 @@ def extract_cdr3(file):
     Where <quantity> stands for the number of repeated <cdr3> pattern
     '''
 
-
     cdr3_regex = re.compile(r'((.+)(C)(.+)(C)(.{2})(.+)(WG.G)(.+)?)')
     dic_cdr3 = {}
-    with open(file, encoding="ISO-8859-1") as f: # TODO: Attila is generating files with non UTF-8 characters, like 'ÿ'
+    # TODO: Attila is generating files with non UTF-8 characters, like 'ÿ'
+    with open(file, encoding="ISO-8859-1") as f:
         read = False
         for line in f:
             if line.startswith('>'):
@@ -50,10 +51,11 @@ def extract_cdr3(file):
             elif read:
                 parse = cdr3_regex.search(line)
 
-                # Correspond to `(.+)` in midle of `(.{2})` and `(WG.G)` in `cdr3_regex` variable
+                # Correspond to `(.+)` in midle of `(.{2})` and `(WG.G)`
+                # in `cdr3_regex` variable
                 cdr3 = parse[7]
 
-                if not cdr3 in dic_cdr3:
+                if cdr3 not in dic_cdr3:
                     dic_cdr3.setdefault(cdr3, 1)
 
                 else:
@@ -127,9 +129,11 @@ Hence,
     if not output_file.parent.is_dir():
         raise EOFError('<output> variable must be a valid directory')
 
-
-    header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy', 'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', 'n_A', 'n_C', 'n_D', 'n_E', 'n_F', 'n_G', 'n_H', 'n_I', 'n_K', 'n_L', 'n_M', 'n_N', 'n_P', 'n_Q', 'n_R', 'n_S', 'n_T', 'n_V', 'n_W', 'n_Y', 'aliphatic', 'aromatic', 'neutral', 'positive', 'negative', 'invalid', 'file']
-
+    header = ['cdr3', 'quantity', 'length', 'MW', 'AV', 'IP', 'flex', 'gravy',
+              'SSF_Helix', 'SSF_Turn', 'SSF_Sheet', 'n_A', 'n_C', 'n_D', 'n_E',
+              'n_F', 'n_G', 'n_H', 'n_I', 'n_K', 'n_L', 'n_M', 'n_N', 'n_P',
+              'n_Q', 'n_R', 'n_S', 'n_T', 'n_V', 'n_W', 'n_Y', 'aliphatic',
+              'aromatic', 'neutral', 'positive', 'negative', 'invalid', 'file']
 
     aa_error = 0
     aa_total = 0
@@ -154,7 +158,8 @@ Hence,
                 attributes.append(f'{prot.secondary_structure_fraction()[1]:0.4f}')
                 attributes.append(f'{prot.secondary_structure_fraction()[2]:0.4f}')
 
-                # preferred to count the amino acids instead of showing the percentage of them
+                # preferred to count the amino acids instead of
+                # showing the percentage of them
                 for num_of_fragment in prot.count_amino_acids().values():
                     attributes.append(str(num_of_fragment))
 
@@ -166,20 +171,19 @@ Hence,
                 for k, v in groups.items():
                     attributes.append(str(v))
 
-                # in the final collumn we put the file name where the data come from
+                # in the final collumn we put the file
+                # name where the data come from
                 attributes.append(f'{output_file.name}')
                 out.writerow(attributes)
                 aa_total += 1
 
-            except Exception as e:
+            except Exception:
                 aa_error += 1
                 # TODO: return ambiguous cdr3 sequences too?
                 # print(f'\t{cdr3}\n')
 
     # TODO: return ambiguous cdr3 sequences too?
     # print(f"Total: {aa_total}\nError: {aa_error}\nPercentage: {aa_error/aa_total}")
-
-
 
 
 def aa_flex(aa):
@@ -215,9 +219,11 @@ flex = {
         'Y': ['0.615', '0.615', '0.004', '0.460', '0.461', '0.008', '0.567', '0.567', '0.005', '0.740', '0.741', '0.009']
         }
 
+
 def handle_files(directory, pattern, type='VH'):
     for file in pathlib.Path(directory).rglob(pattern):
         pass
+
 
 if __name__ == "__main__":
     import readline
@@ -242,7 +248,5 @@ if __name__ == "__main__":
 
         print(f'Elapsed time: {timeit.default_timer() - start}\n\n')
 
-
     except KeyboardInterrupt:
         print('\n\nExiting ATTILA...\n')
-
